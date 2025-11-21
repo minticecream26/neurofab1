@@ -1,103 +1,94 @@
-import React, { useState, useEffect } from 'react';<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeuroFab - AI Engineering Design Generator</title>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Mermaid for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        #root {
-            width: 100vw;
-            height: 100vh;
-        }
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #root { width: 100vw; height: 100vh; }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script type="text/babel">
+        // Get React hooks from global
         const { useState, useEffect } = React;
-        const { 
-            Zap, Code, Download, Loader2, CheckCircle, AlertCircle, Palette, 
-            FileText, Box, History, Trash2, Star, Search, Copy, Check, Eye, 
-            Smartphone, FileCode, FileSpreadsheet, FileImage, MessageCircle, 
-            Send, X, Archive, GitCompare, Share2, QrCode, Cpu, Mic, Upload, Image: ImageIcon
-        } = lucide;
-
+        
+        // Your artifact component code goes here
+        // INSTRUCTIONS:
+        // 1. Go back to the artifact called "NeuroFab - Fixed with Working Proxy"
+        // 2. Click the code button </> 
+        // 3. Copy EVERYTHING after "export default function NeuroFab()" 
+        // 4. Paste it here replacing this comment
+        // 5. Make sure to REMOVE any "import" statements at the top
+        // 6. The component should start with: function NeuroFab() {
+        
         function NeuroFab() {
-            // Your entire NeuroFab component code goes here
-            // Since the artifact is very large, please:
-            // 1. Go back to Claude chat
-            // 2. Ask: "Can you show me just the NeuroFab component code without the wrapper?"
-            // 3. Copy that code and paste it here, replacing this comment
-            
             return (
-                <div className="min-h-screen bg-gradient-to-br from-black via-green-950 to-black text-white p-8 flex items-center justify-center">
-                    <div className="text-center">
-                        <h1 className="text-6xl font-bold mb-4" style={{color: '#7FFFD4', textShadow: '0 0 30px rgba(127, 255, 212, 0.3)'}}>
+                <div style={{
+                    minHeight: '100vh',
+                    background: 'linear-gradient(to bottom right, #000, #1a4d2e, #000)',
+                    color: 'white',
+                    padding: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'Comfortaa, sans-serif'
+                }}>
+                    <div style={{textAlign: 'center', maxWidth: '800px'}}>
+                        <h1 style={{fontSize: '60px', color: '#7FFFD4', marginBottom: '20px'}}>
                             NeuroFab
                         </h1>
-                        <p className="text-xl text-gray-300 mb-8">
+                        <p style={{fontSize: '20px', marginBottom: '40px'}}>
                             AI-Powered Engineering Design Generator
                         </p>
-                        <div className="bg-yellow-500/10 border-2 border-yellow-500 rounded-lg p-6 max-w-2xl mx-auto">
-                            <p className="text-yellow-300 mb-4">
-                                ⚠️ <strong>Setup Required:</strong>
-                            </p>
-                            <p className="text-white text-left mb-4">
-                                To complete the setup:
-                            </p>
-                            <ol className="text-left text-white space-y-2">
-                                <li>1. Go back to Claude chat</li>
-                                <li>2. Say: <code className="bg-black/50 px-2 py-1 rounded">"Show me the NeuroFab React component code"</code></li>
-                                <li>3. Copy the component code Claude provides</li>
-                                <li>4. Open this HTML file in a text editor</li>
-                                <li>5. Replace the comment inside the NeuroFab function with the copied code</li>
-                                <li>6. Save and reload this page</li>
+                        <div style={{
+                            background: 'rgba(127, 255, 212, 0.1)',
+                            border: '2px solid #7FFFD4',
+                            borderRadius: '12px',
+                            padding: '30px',
+                            textAlign: 'left'
+                        }}>
+                            <h2 style={{color: '#7FFFD4', marginBottom: '20px'}}>📋 Final Setup Step:</h2>
+                            <ol style={{lineHeight: '2', fontSize: '16px'}}>
+                                <li>In your GitHub repo, click on <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>index.html</code></li>
+                                <li>Click the <strong>pencil icon</strong> (✏️) to edit</li>
+                                <li>Find the comment that says "Your artifact component code goes here"</li>
+                                <li>Replace it with the NeuroFab component code from Claude</li>
+                                <li><strong>Important:</strong> Remove any lines that say <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>import React</code> or <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>import &#123;</code></li>
+                                <li>The code should start with: <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>function NeuroFab() &#123;</code></li>
+                                <li>Click <strong>"Commit changes"</strong></li>
+                                <li>Vercel will auto-redeploy in 30 seconds!</li>
                             </ol>
-                            <p className="text-gray-400 text-sm mt-4">
-                                The component code is too large to fit in one artifact, so it needs to be inserted manually.
-                            </p>
+                            <div style={{
+                                background: 'rgba(255, 193, 7, 0.1)',
+                                border: '1px solid #ffc107',
+                                borderRadius: '8px',
+                                padding: '15px',
+                                marginTop: '20px'
+                            }}>
+                                <p style={{color: '#ffc107', margin: 0}}>
+                                    💡 <strong>Tip:</strong> Ask Claude: "Show me the NeuroFab component code without imports"
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             );
         }
 
-        // Render the app
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<NeuroFab />);
         
-        // Initialize Mermaid
-        mermaid.initialize({ 
-            startOnLoad: true, 
-            theme: 'dark'
-        });
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
     </script>
 </body>
 </html>
-}
