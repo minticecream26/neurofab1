@@ -1,0 +1,2161 @@
+import React, { useState, useEffect } from 'react';
+import { Zap, Code, Download, Loader2, CheckCircle, AlertCircle, Palette, FileText, Box, History, Trash2, Star, Search, Copy, Check, Eye, Smartphone, FileCode, FileSpreadsheet, FileImage, MessageCircle, Send, X, Archive, GitCompare, Share2, QrCode, Cpu, Mic, Upload, Image } from 'lucide-react';
+
+export default function NeuroFab() {
+  const [idea, setIdea] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState('');
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState(null);
+  const [theme, setTheme] = useState('mint');
+  const [activeTab, setActiveTab] = useState('plan');
+  const [page, setPage] = useState('main');
+  const [history, setHistory] = useState([]);
+  const [usingClaude, setUsingClaude] = useState(false);
+  const [historyRetention, setHistoryRetention] = useState('never');
+  const [generationMode, setGenerationMode] = useState('moderate');
+  const [skipCAD, setSkipCAD] = useState(true);
+  const [favorites, setFavorites] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedSection, setCopiedSection] = useState(null);
+  const [show3DPreview, setShow3DPreview] = useState(false);
+  const [showCircuitDiagram, setShowCircuitDiagram] = useState(false);
+  const [exportFormat, setExportFormat] = useState(null);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [editedCode, setEditedCode] = useState('');
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareProject, setCompareProject] = useState(null);
+  const [showCompareMenu, setShowCompareMenu] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [showQR, setShowQR] = useState(false);
+  const [showPCBPreview, setShowPCBPreview] = useState(false);
+  const [tooltip, setTooltip] = useState({ show: false, text: '', x: 0, y: 0 });
+  const [isRecording, setIsRecording] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [analyzingImage, setAnalyzingImage] = useState(false);
+
+  const themes = {
+    mint: {
+      name: 'Glacial Mint',
+      bg: 'from-black via-green-950 to-black',
+      primary: '#7FFFD4',
+      secondary: '#5FE6B4',
+      accent: '#9FFFD4',
+      glow: 'rgba(127, 255, 212, 0.3)',
+      text: '#7FFFD4'
+    },
+    ocean: {
+      name: 'Ocean Blue',
+      bg: 'from-black via-blue-950 to-black',
+      primary: '#4A90E2',
+      secondary: '#357ABD',
+      accent: '#5DADE2',
+      glow: 'rgba(74, 144, 226, 0.3)',
+      text: '#4A90E2'
+    },
+    purple: {
+      name: 'Royal Purple',
+      bg: 'from-black via-purple-950 to-black',
+      primary: '#9B59B6',
+      secondary: '#7D3C98',
+      accent: '#BB8FCE',
+      glow: 'rgba(155, 89, 182, 0.3)',
+      text: '#9B59B6'
+    },
+    orange: {
+      name: 'Sunset Orange',
+      bg: 'from-black via-orange-950 to-black',
+      primary: '#FF8C42',
+      secondary: '#E67E22',
+      accent: '#FFAA6F',
+      glow: 'rgba(255, 140, 66, 0.3)',
+      text: '#FF8C42'
+    }
+  };
+
+  const currentTheme = themes[theme];
+
+  useEffect(() => {
+    loadHistory();
+    loadHistoryRetention();
+    loadFavorites();
+    loadDraft();
+    
+    // Keyboard shortcuts
+    const handleKeyDown = (e) => {
+      // Ctrl/Cmd + G - Generate project
+      if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+        e.preventDefault();
+        if (idea.trim() && !loading && page === 'main') {
+          generateProject();
+        }
+      }
+      
+      // Ctrl/Cmd + S - Download all files
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (results) {
+          downloadAllFiles();
+        }
+      }
+      
+      // Ctrl/Cmd + E - Show export menu
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        if (results) {
+          setExportFormat(exportFormat ? null : 'menu');
+        }
+      }
+      
+      // ESC - Close modals
+      if (e.key === 'Escape') {
+        setShowChat(false);
+        setExportFormat(null);
+        setShowCompareMenu(false);
+        setShowShareModal(false);
+        setShowQR(false);
+        setShowPCBPreview(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [idea, loading, results, page, exportFormat]);
+
+  useEffect(() => {
+    if (historyRetention !== 'never') {
+      cleanupOldHistory();
+    }
+  }, [history, historyRetention]);
+
+  useEffect(() => {
+    if (idea.trim()) {
+      const timer = setTimeout(() => {
+        saveDraft();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [idea]);
+
+  const loadHistory = async () => {
+    try {
+      const keys = await window.storage.list('project:');
+      if (keys && keys.keys) {
+        const projects = [];
+        for (const key of keys.keys) {
+          try {
+            const data = await window.storage.get(key);
+            if (data && data.value) {
+              projects.push(JSON.parse(data.value));
+            }
+          } catch (e) {
+            console.log('Skipping invalid project:', key);
+          }
+        }
+        setHistory(projects.sort((a, b) => b.timestamp - a.timestamp));
+      }
+    } catch (e) {
+      console.log('History not available yet');
+    }
+  };
+
+  const loadFavorites = async () => {
+    try {
+      const result = await window.storage.get('favorites');
+      if (result && result.value) {
+        setFavorites(JSON.parse(result.value));
+      }
+    } catch (e) {
+      console.log('No favorites found');
+    }
+  };
+
+  const toggleFavorite = async (projectId) => {
+    const newFavorites = favorites.includes(projectId)
+      ? favorites.filter(id => id !== projectId)
+      : [...favorites, projectId];
+    
+    setFavorites(newFavorites);
+    try {
+      await window.storage.set('favorites', JSON.stringify(newFavorites));
+    } catch (e) {
+      console.error('Failed to save favorites:', e);
+    }
+  };
+
+  const saveDraft = async () => {
+    try {
+      await window.storage.set('draft_idea', idea);
+    } catch (e) {
+      console.error('Failed to save draft:', e);
+    }
+  };
+
+  const loadDraft = async () => {
+    try {
+      const result = await window.storage.get('draft_idea');
+      if (result && result.value) {
+        setIdea(result.value);
+      }
+    } catch (e) {
+      console.log('No draft found');
+    }
+  };
+
+  const clearDraft = async () => {
+    try {
+      await window.storage.delete('draft_idea');
+      setIdea('');
+    } catch (e) {
+      console.error('Failed to clear draft:', e);
+    }
+  };
+
+  const copyToClipboard = async (text, section) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSection(section);
+      setTimeout(() => setCopiedSection(null), 2000);
+    } catch (e) {
+      console.error('Failed to copy:', e);
+    }
+  };
+
+  const loadHistoryRetention = async () => {
+    try {
+      const result = await window.storage.get('history_retention');
+      if (result && result.value) {
+        setHistoryRetention(result.value);
+      }
+    } catch (e) {
+      console.log('No retention setting found');
+    }
+  };
+
+  const saveHistoryRetention = async (value) => {
+    try {
+      await window.storage.set('history_retention', value);
+      setHistoryRetention(value);
+      cleanupOldHistory(value);
+    } catch (e) {
+      console.error('Failed to save retention setting:', e);
+    }
+  };
+
+  const getRetentionMilliseconds = (retention) => {
+    const durations = {
+      '1hour': 60 * 60 * 1000,
+      '1day': 24 * 60 * 60 * 1000,
+      '1week': 7 * 24 * 60 * 60 * 1000,
+      '1month': 30 * 24 * 60 * 60 * 1000,
+      '1year': 365 * 24 * 60 * 60 * 1000,
+      'never': Infinity
+    };
+    return durations[retention] || Infinity;
+  };
+
+  const cleanupOldHistory = async (retention = historyRetention) => {
+    if (retention === 'never') return;
+    
+    const cutoffTime = Date.now() - getRetentionMilliseconds(retention);
+    const itemsToDelete = history.filter(item => item.timestamp < cutoffTime);
+    
+    for (const item of itemsToDelete) {
+      try {
+        await window.storage.delete(`project:${item.id}`);
+      } catch (e) {
+        console.error('Failed to delete old item:', e);
+      }
+    }
+    
+    if (itemsToDelete.length > 0) {
+      await loadHistory();
+    }
+  };
+
+  const saveToHistory = async (projectData) => {
+    const historyItem = {
+      id: Date.now(),
+      timestamp: Date.now(),
+      idea: idea,
+      ...projectData
+    };
+    
+    try {
+      await window.storage.set(`project:${historyItem.id}`, JSON.stringify(historyItem));
+      await loadHistory();
+    } catch (e) {
+      console.error('Failed to save to history:', e);
+    }
+  };
+
+  const deleteFromHistory = async (id) => {
+    try {
+      await window.storage.delete(`project:${id}`);
+      await loadHistory();
+    } catch (e) {
+      console.error('Failed to delete:', e);
+    }
+  };
+
+  const loadFromHistory = (item) => {
+    setResults(item);
+    setIdea(item.idea);
+    setPage('main');
+    setActiveTab('plan');
+  };
+
+  const filteredHistory = history.filter(item => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      item.plan.projectName.toLowerCase().includes(query) ||
+      item.idea.toLowerCase().includes(query) ||
+      item.plan.description.toLowerCase().includes(query) ||
+      item.plan.hardware.platform.toLowerCase().includes(query)
+    );
+  });
+
+  const startVoiceInput = () => {
+    console.log('Voice button clicked!');
+    
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      const msg = 'Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.';
+      console.error(msg);
+      alert(msg);
+      return;
+    }
+
+    console.log('Speech recognition is supported!');
+
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      console.log('Recognition object created:', recognition);
+      
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        console.log('✅ Voice recognition STARTED');
+        setIsRecording(true);
+        alert('Listening... Speak now!');
+      };
+
+      recognition.onresult = (event) => {
+        console.log('✅ Voice recognition RESULT:', event);
+        const transcript = event.results[0][0].transcript;
+        console.log('Transcript:', transcript);
+        setIdea(prev => prev ? `${prev} ${transcript}` : transcript);
+        setIsRecording(false);
+        alert(`Heard: "${transcript}"`);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('❌ Speech recognition ERROR:', event.error, event);
+        setIsRecording(false);
+        if (event.error === 'no-speech') {
+          alert('No speech detected. Please try again and speak clearly.');
+        } else if (event.error === 'not-allowed') {
+          alert('⚠️ Microphone access denied. Please allow microphone access in your browser settings and try again.');
+        } else if (event.error === 'network') {
+          alert('Network error. Please check your internet connection.');
+        } else {
+          alert(`Voice recognition error: ${event.error}. Check the console for details.`);
+        }
+      };
+
+      recognition.onend = () => {
+        console.log('Voice recognition ENDED');
+        setIsRecording(false);
+      };
+
+      console.log('Starting recognition...');
+      recognition.start();
+      console.log('Recognition.start() called');
+    } catch (err) {
+      console.error('❌ EXCEPTION starting voice recognition:', err);
+      alert(`Failed to start voice recognition: ${err.message}`);
+      setIsRecording(false);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (PNG, JPG, etc.)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      setUploadedImage(event.target.result);
+      setAnalyzingImage(true);
+
+      try {
+        const response = await callAI(`You are analyzing a sketch or diagram for an electronics/engineering project. 
+
+Based on this image, describe what kind of project the user wants to build. Look for:
+- Circuit diagrams or component layouts
+- Sketches of physical enclosures or mechanisms
+- Handwritten notes or labels
+- Block diagrams showing system architecture
+- Any text or annotations
+
+Provide a detailed project description that could be used to generate a complete project plan. Include:
+- What the device/system does
+- Key components you can identify
+- Any specifications or requirements visible
+- Suggested hardware platform if indicated
+
+Be specific and detailed.`);
+
+        setIdea(response);
+        setAnalyzingImage(false);
+      } catch (err) {
+        alert('Failed to analyze image. Please try again or describe your project manually.');
+        setAnalyzingImage(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const showTooltip = (e, text) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({
+      show: true,
+      text: text,
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10
+    });
+  };
+
+  const hideTooltip = () => {
+    setTooltip({ show: false, text: '', x: 0, y: 0 });
+  };
+
+  const callAI = async (prompt, systemContext = '', mode = generationMode) => {
+    const fullPrompt = systemContext ? `${systemContext}\n\n${prompt}` : prompt;
+    
+    const modeConfig = {
+      max_speed: {
+        model: 'claude-haiku-4-20250514',
+        maxTokensGemini: 800,
+        maxTokensClaude: 1000,
+        temperature: 0.8
+      },
+      moderate: {
+        model: 'claude-sonnet-4-20250514',
+        maxTokensGemini: 1200,
+        maxTokensClaude: 1500,
+        temperature: 0.7
+      },
+      max_detail: {
+        model: 'claude-sonnet-4-20250514',
+        maxTokensGemini: 2500,
+        maxTokensClaude: 4000,
+        temperature: 0.6
+      }
+    };
+    
+    const config = modeConfig[mode];
+    
+    try {
+      const response = await fetch('https://gemini-proxy-six-rouge.vercel.app/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: fullPrompt }]
+          }],
+          generationConfig: {
+            temperature: config.temperature,
+            maxOutputTokens: config.maxTokensGemini
+          }
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content) {
+        setUsingClaude(false);
+        return data.candidates[0].content.parts[0].text;
+      }
+      
+      throw new Error('Proxy request failed');
+    } catch (proxyError) {
+      if (!proxyError.message.includes('Content Security Policy')) {
+        console.log('Proxy failed, falling back to Claude...', proxyError);
+      }
+      
+      setUsingClaude(true);
+      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: config.model,
+          max_tokens: config.maxTokensClaude,
+          messages: [{
+            role: 'user',
+            content: fullPrompt
+          }]
+        })
+      });
+
+      if (!claudeResponse.ok) {
+        const errorText = await claudeResponse.text();
+        console.error('Claude API Error:', claudeResponse.status, errorText);
+        throw new Error(`API Error ${claudeResponse.status}: The AI service is temporarily unavailable. Please try again in a few moments.`);
+      }
+
+      const claudeData = await claudeResponse.json();
+      if (!claudeData.content || !claudeData.content[0] || !claudeData.content[0].text) {
+        throw new Error('Invalid response from API');
+      }
+
+      return claudeData.content[0].text;
+    }
+  };
+
+  const generateProject = async () => {
+    setLoading(true);
+    setError(null);
+    setResults(null);
+    setActiveTab('plan');
+    
+    try {
+      const promptDetail = {
+        max_speed: {
+          planPrompt: 'Analyze and create a concise project plan with essential details only.',
+          cadPrompt: 'Generate minimal OpenSCAD code for a basic enclosure.',
+          bomPrompt: 'Create a basic BOM with essential components only.',
+          codePrompt: 'Write minimal working code with basic functionality.',
+          instructionsPrompt: 'Provide brief assembly steps.'
+        },
+        moderate: {
+          planPrompt: 'Analyze this project idea and create a detailed plan.',
+          cadPrompt: 'Generate OpenSCAD code for this project.\n\nCreate a functional, 3D-printable enclosure. Include:\n- Mounting holes\n- Component access\n- Cable management',
+          bomPrompt: 'Create a Bill of Materials for this electronics project.',
+          codePrompt: 'Write code with appropriate libraries, initialization, and main loop.',
+          instructionsPrompt: 'Write clear steps for assembly, wiring, installation, and testing.'
+        },
+        max_detail: {
+          planPrompt: 'Carefully analyze this project idea in depth and create a comprehensive, detailed plan with thorough justifications.',
+          cadPrompt: 'Generate detailed OpenSCAD code for this project.\n\nCreate a professional, 3D-printable enclosure with:\n- Precise mounting holes\n- Easy component access\n- Organized cable management\n- Ventilation if needed\n- Professional finish considerations\n- Assembly guides built into the design',
+          bomPrompt: 'Create a comprehensive Bill of Materials with detailed specifications, multiple supplier options where applicable, and exact part numbers.',
+          codePrompt: 'Write well-documented, production-ready code with:\n- Comprehensive error handling\n- Detailed comments explaining logic\n- Modular functions\n- Configuration options\n- Debugging capabilities\n- Performance optimizations',
+          instructionsPrompt: 'Write comprehensive, step-by-step assembly instructions with:\n- Detailed preparation steps\n- Tool requirements\n- Safety considerations\n- Troubleshooting tips\n- Testing procedures\n- Calibration guidance'
+        }
+      };
+
+      const detail = promptDetail[generationMode];
+
+      setCurrentStep('Analyzing your idea and creating plan...');
+      const planText = await callAI(`You are an engineering assistant. ${detail.planPrompt}
+
+Project Idea: ${idea}
+
+Analyze for: hardware preferences, programming language, budget, power requirements, size constraints, performance needs, specifications.
+
+Select the most appropriate platform and language.
+
+CRITICAL: Output ONLY valid JSON with no markdown, no code blocks, no preamble. Start directly with { and end with }
+
+{
+  "projectName": "short name",
+  "description": "one sentence",
+  "hardware": {"platform": "e.g., ESP32", "justification": "why"},
+  "language": {"primary": "e.g., C++", "justification": "why"},
+  "cadRequirements": "physical parts needed",
+  "electronicsComponents": ["list"],
+  "functionalRequirements": "what code does",
+  "pinRequirements": "pins/GPIO needed"
+}`);
+      
+      const cleanedPlanText = planText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const plan = JSON.parse(cleanedPlanText);
+
+      setCurrentStep('Generating all components in parallel...');
+      
+      const generatePromises = (generationMode === 'max_speed' && skipCAD)
+        ? [
+            Promise.resolve('// CAD generation skipped in max speed mode'),
+            callAI(`${detail.bomPrompt}
+
+Project: ${plan.projectName}
+Platform: ${plan.hardware.platform}
+Components: ${plan.electronicsComponents.join(', ')}
+
+CRITICAL: Output ONLY valid JSON with no markdown, no code blocks. Start directly with { and end with }
+
+{
+  "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
+  "totalEstimatedCost": "",
+  "connectionDiagram": ""
+}`),
+            callAI(`${detail.codePrompt}
+
+Project: ${plan.projectName}
+Platform: ${plan.hardware.platform}
+Language: ${plan.language.primary}
+Functionality: ${plan.functionalRequirements}
+
+Output ONLY code, no explanations.`)
+          ]
+        : [
+            callAI(`${detail.cadPrompt}
+
+Project: ${plan.projectName}
+Hardware: ${plan.hardware.platform}
+Requirements: ${plan.cadRequirements}
+
+Output ONLY OpenSCAD code, no explanations.`),
+
+            callAI(`${detail.bomPrompt}
+
+Project: ${plan.projectName}
+Platform: ${plan.hardware.platform}
+Components: ${plan.electronicsComponents.join(', ')}
+Pins: ${plan.pinRequirements}
+
+CRITICAL: Output ONLY valid JSON with no markdown, no code blocks. Start directly with { and end with }
+
+{
+  "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
+  "totalEstimatedCost": "",
+  "connectionDiagram": ""
+}`),
+
+            callAI(`${detail.codePrompt}
+
+Project: ${plan.projectName}
+Hardware: ${plan.hardware.platform}
+Language: ${plan.language.primary}
+Functionality: ${plan.functionalRequirements}
+
+Output ONLY code, no explanations.`)
+          ];
+
+      const [openscadCode, bomText, controlCode] = await Promise.all(generatePromises);
+
+      const cleanedBomText = bomText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const bom = JSON.parse(cleanedBomText);
+
+      setCurrentStep('Creating assembly instructions...');
+      const instructions = await callAI(`${detail.instructionsPrompt}
+
+Project: ${plan.projectName}
+Hardware: ${plan.hardware.platform}
+Language: ${plan.language.primary}
+Components: ${JSON.stringify(bom.components)}
+Wiring: ${bom.connectionDiagram}`);
+
+      const projectData = {
+        plan,
+        openscadCode: openscadCode.replace(/```.*?\n/g, '').replace(/```/g, ''),
+        bom,
+        controlCode: controlCode.replace(/```.*?\n/g, '').replace(/```/g, ''),
+        instructions
+      };
+
+      setResults(projectData);
+      await saveToHistory(projectData);
+      
+      setCurrentStep('');
+      setLoading(false);
+    } catch (err) {
+      setError(err.message || 'An error occurred during generation');
+      console.error('Generation error:', err);
+      setLoading(false);
+    }
+  };
+
+  const downloadFile = (content, filename) => {
+    try {
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    } catch (err) {
+      console.error('Download failed:', err);
+      navigator.clipboard.writeText(content).then(() => {
+        alert(`Download blocked by browser. Content copied to clipboard instead!\nFilename: ${filename}`);
+      }).catch(() => {
+        alert('Download blocked. Please allow downloads from this site in your browser settings.');
+      });
+    }
+  };
+
+  const downloadAllFiles = () => {
+    if (!results) return;
+    
+    const fileExt = results.plan.language.primary === 'Python' || results.plan.language.primary === 'MicroPython' 
+      ? '.py' 
+      : results.plan.language.primary === 'C++' || results.plan.language.primary === 'C' 
+      ? '.ino' 
+      : '.txt';
+    
+    downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`);
+    downloadFile(JSON.stringify(results.bom, null, 2), `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.json`);
+    downloadFile(results.controlCode, `${results.plan.projectName.replace(/\s+/g, '_')}_main${fileExt}`);
+    downloadFile(results.instructions, `${results.plan.projectName.replace(/\s+/g, '_')}_INSTRUCTIONS.txt`);
+  };
+
+  const generateCircuitDiagram = (bom) => {
+    if (!bom || !bom.components) return '';
+    
+    const nodes = [`  ${bom.components[0].name.split(' ')[0] || 'MCU'}[${results?.plan?.hardware?.platform || 'Microcontroller'}]`];
+    const connections = [];
+    
+    bom.components.slice(1).forEach((comp, idx) => {
+      const compName = comp.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 15);
+      nodes.push(`  ${compName}[${comp.name}]`);
+      connections.push(`  ${bom.components[0].name.split(' ')[0] || 'MCU'} -->|${comp.pinConnection || 'Pin'}| ${compName}`);
+    });
+    
+    return `graph TD\n${nodes.join('\n')}\n${connections.join('\n')}`;
+  };
+
+  const exportToPDF = () => {
+    if (!results) return;
+    
+    const content = `
+# ${results.plan.projectName}
+
+## Project Overview
+${results.plan.description}
+
+## Hardware Platform
+${results.plan.hardware.platform}
+Justification: ${results.plan.hardware.justification}
+
+## Programming Language
+${results.plan.language.primary}
+Justification: ${results.plan.language.justification}
+
+## Bill of Materials
+Total Cost: ${results.bom.totalEstimatedCost}
+
+${results.bom.components.map((comp, idx) => `
+${idx + 1}. ${comp.name}
+   - Quantity: ${comp.quantity}
+   - Part Number: ${comp.partNumber}
+   - Supplier: ${comp.supplier}
+   - Cost: ${comp.estimatedCost}
+   - Purpose: ${comp.purpose}
+   ${comp.pinConnection ? `- Pin: ${comp.pinConnection}` : ''}
+`).join('\n')}
+
+## Wiring Diagram
+${results.bom.connectionDiagram}
+
+## Control Code
+\`\`\`${results.plan.language.primary.toLowerCase()}
+${results.controlCode}
+\`\`\`
+
+## Assembly Instructions
+${results.instructions}
+
+## CAD Model
+${results.openscadCode}
+`;
+    
+    downloadFile(content, `${results.plan.projectName.replace(/\s+/g, '_')}_Report.md`);
+    setExportFormat(null);
+  };
+
+  const exportToExcel = () => {
+    if (!results) return;
+    
+    const csvContent = `Component,Quantity,Part Number,Supplier,Cost,Purpose,Pin Connection\n${
+      results.bom.components.map(comp => 
+        `"${comp.name}",${comp.quantity},"${comp.partNumber}","${comp.supplier}","${comp.estimatedCost}","${comp.purpose}","${comp.pinConnection || 'N/A'}"`
+      ).join('\n')
+    }`;
+    
+    downloadFile(csvContent, `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.csv`);
+    setExportFormat(null);
+  };
+
+  const exportToMarkdown = () => {
+    if (!results) return;
+    
+    const mdContent = `# ${results.plan.projectName}
+
+> ${results.plan.description}
+
+## 📋 Project Details
+
+**Hardware Platform:** ${results.plan.hardware.platform}  
+**Programming Language:** ${results.plan.language.primary}  
+**Estimated Cost:** ${results.bom.totalEstimatedCost}
+
+## 🔧 Components
+
+| Component | Qty | Part # | Supplier | Cost | Pin |
+|-----------|-----|--------|----------|------|-----|
+${results.bom.components.map(comp => 
+  `| ${comp.name} | ${comp.quantity} | ${comp.partNumber} | ${comp.supplier} | ${comp.estimatedCost} | ${comp.pinConnection || 'N/A'} |`
+).join('\n')}
+
+## 📐 Wiring
+
+\`\`\`
+${results.bom.connectionDiagram}
+\`\`\`
+
+## 💻 Code
+
+\`\`\`${results.plan.language.primary.toLowerCase()}
+${results.controlCode}
+\`\`\`
+
+## 🔨 Assembly
+
+${results.instructions}
+`;
+    
+    downloadFile(mdContent, `${results.plan.projectName.replace(/\s+/g, '_')}_README.md`);
+    setExportFormat(null);
+  };
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || !results) return;
+    
+    const userMessage = { role: 'user', content: chatInput };
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setChatLoading(true);
+    
+    try {
+      const projectContext = `
+Current Project: ${results.plan.projectName}
+Hardware: ${results.plan.hardware.platform}
+Language: ${results.plan.language.primary}
+Components: ${results.bom.components.map(c => c.name).join(', ')}
+`;
+
+      const response = await callAI(`You are a helpful engineering assistant helping with this project:
+
+${projectContext}
+
+User Question: ${chatInput}
+
+Provide a helpful, concise answer focused on this specific project. If the question is about modifying code, suggest specific changes. If about components, reference the actual BOM.`);
+      
+      const assistantMessage = { role: 'assistant', content: response };
+      setChatMessages(prev => [...prev, assistantMessage]);
+    } catch (err) {
+      const errorMessage = { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' };
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const tabs = [
+    { id: 'plan', name: 'Project Plan', icon: FileText },
+    { id: 'cad', name: 'CAD Model', icon: Box },
+    { id: 'pcb', name: 'PCB Layout', icon: Cpu },
+    { id: 'bom', name: 'Electronics BOM', icon: Zap },
+    { id: 'code', name: 'Control Code', icon: Code },
+    { id: 'instructions', name: 'Assembly Guide', icon: CheckCircle }
+  ];
+
+  return (
+    <div className={`min-h-screen bg-gradient-to-br ${currentTheme.bg} text-white p-8 transition-all duration-500`}
+         style={{fontFamily: 'Comfortaa, cursive'}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+        
+        .theme-glow {
+          box-shadow: 0 0 20px ${currentTheme.glow};
+        }
+        
+        .theme-glow-sm {
+          box-shadow: 0 0 10px ${currentTheme.glow};
+        }
+        
+        .hover-lift {
+          transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 30px ${currentTheme.glow};
+        }
+        
+        .theme-border {
+          border-color: ${currentTheme.primary};
+        }
+        
+        .theme-text {
+          color: ${currentTheme.text};
+        }
+        
+        .theme-bg {
+          background-color: ${currentTheme.primary};
+        }
+        
+        .tab-active {
+          background-color: ${currentTheme.primary};
+          color: #000;
+        }
+        
+        .tab-inactive {
+          background-color: rgba(255, 255, 255, 0.1);
+          color: ${currentTheme.text};
+        }
+        
+        ::-webkit-scrollbar {
+          width: 12px;
+          height: 12px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: ${currentTheme.primary};
+          border-radius: 10px;
+          border: 2px solid rgba(0, 0, 0, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: ${currentTheme.secondary};
+          box-shadow: 0 0 10px ${currentTheme.glow};
+        }
+        
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: ${currentTheme.primary} rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+          .mobile-stack {
+            flex-direction: column;
+          }
+          
+          .mobile-full {
+            width: 100% !important;
+          }
+        }
+      `}</style>
+      <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+      <script>
+        {`
+          if (typeof mermaid !== 'undefined') {
+            mermaid.initialize({ 
+              startOnLoad: true, 
+              theme: 'dark',
+              themeVariables: {
+                primaryColor: '${currentTheme.primary}',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '${currentTheme.primary}',
+                lineColor: '${currentTheme.secondary}',
+                secondaryColor: '${currentTheme.accent}',
+                tertiaryColor: '#1a1a1a'
+              }
+            });
+            setTimeout(() => {
+              if (document.querySelector('.mermaid')) {
+                mermaid.run();
+              }
+            }, 500);
+          }
+        `}
+      </script>
+      
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="absolute top-6 left-6 z-10">
+          <button
+            onClick={() => setPage(page === 'main' ? 'history' : 'main')}
+            className="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80 transition-all"
+            style={{color: currentTheme.primary}}
+          >
+            <History size={20} />
+            <span className="font-semibold">{page === 'main' ? 'History' : 'Back'}</span>
+          </button>
+        </div>
+
+        <div className="absolute top-6 right-6 z-10">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-2 border border-white/20">
+              <Palette size={20} style={{color: currentTheme.primary}} />
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                className="bg-black text-white font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1"
+                style={{color: currentTheme.primary, backgroundColor: '#000'}}
+              >
+                <option value="mint" style={{backgroundColor: '#000', color: '#7FFFD4'}}>Glacial Mint</option>
+                <option value="ocean" style={{backgroundColor: '#000', color: '#4A90E2'}}>Ocean Blue</option>
+                <option value="purple" style={{backgroundColor: '#000', color: '#9B59B6'}}>Royal Purple</option>
+                <option value="orange" style={{backgroundColor: '#000', color: '#FF8C42'}}>Sunset Orange</option>
+              </select>
+            </div>
+            
+            <div className="bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap size={20} style={{color: currentTheme.primary}} />
+                <select
+                  value={generationMode}
+                  onChange={(e) => setGenerationMode(e.target.value)}
+                  disabled={loading}
+                  className="bg-black text-white font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{color: currentTheme.primary, backgroundColor: '#000'}}
+                >
+                  <option value="max_speed" style={{backgroundColor: '#000'}}>⚡ Max Speed</option>
+                  <option value="moderate" style={{backgroundColor: '#000'}}>⚙️ Moderate</option>
+                  <option value="max_detail" style={{backgroundColor: '#000'}}>🔬 Max Detail</option>
+                </select>
+              </div>
+              
+              <div className="text-xs text-gray-400 ml-7 mb-2">
+                {generationMode === 'max_speed' && (
+                  <div>
+                    <div className="mb-1">~20-30s • Claude Haiku</div>
+                    <div>800-1000 tokens • Basic outputs</div>
+                  </div>
+                )}
+                {generationMode === 'moderate' && (
+                  <div>
+                    <div className="mb-1">~45-60s • Claude Sonnet</div>
+                    <div>1200-1500 tokens • Balanced</div>
+                  </div>
+                )}
+                {generationMode === 'max_detail' && (
+                  <div>
+                    <div className="mb-1">~90-120s • Claude Sonnet</div>
+                    <div>2500-4000 tokens • Comprehensive</div>
+                  </div>
+                )}
+              </div>
+              
+              {generationMode === 'max_speed' && (
+                <label className="flex items-center gap-2 ml-7 cursor-pointer group">
+                  <div className="relative w-4 h-4">
+                    <input
+                      type="checkbox"
+                      checked={skipCAD}
+                      onChange={(e) => setSkipCAD(e.target.checked)}
+                      disabled={loading}
+                      className="w-full h-full cursor-pointer disabled:cursor-not-allowed appearance-none border-2 rounded transition-all"
+                      style={{
+                        borderColor: currentTheme.primary,
+                        backgroundColor: skipCAD ? currentTheme.primary : 'rgba(0, 0, 0, 0.8)',
+                        boxShadow: skipCAD ? `0 0 8px ${currentTheme.glow}` : 'none'
+                      }}
+                    />
+                    {skipCAD && (
+                      <svg 
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" 
+                        viewBox="0 0 12 12"
+                        style={{color: '#000'}}
+                      >
+                        <path 
+                          d="M2 6L5 9L10 3" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                          fill="none"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-300 group-hover:text-white transition-colors">
+                    Skip CAD generation
+                  </span>
+                </label>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <svg width="90" height="90" viewBox="0 0 400 400" className="transition-all duration-500" fill={currentTheme.primary} stroke={currentTheme.primary} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="30" y="30" width="340" height="340" rx="50" ry="50" fill="none" stroke={currentTheme.primary} strokeWidth="12"/>
+              <path d="M 80 200 Q 80 160 110 160 Q 110 120 150 120 Q 190 120 205 150 Q 205 190 205 220 Q 205 260 175 275 Q 145 275 115 260 Q 80 245 80 200 Z" fill={currentTheme.primary} stroke="none"/>
+              <line x1="205" y1="155" x2="260" y2="155" strokeWidth="10"/>
+              <path d="M 260 155 L 280 155 Q 300 155 300 135" fill="none" strokeWidth="10"/>
+              <circle cx="300" cy="135" r="13" fill={currentTheme.primary} stroke={currentTheme.primary}/>
+              <line x1="205" y1="200" x2="310" y2="200" strokeWidth="10"/>
+              <circle cx="310" cy="200" r="13" fill={currentTheme.primary} stroke={currentTheme.primary}/>
+              <line x1="205" y1="245" x2="260" y2="245" strokeWidth="10"/>
+              <path d="M 260 245 L 280 245 Q 300 245 300 265" fill="none" strokeWidth="10"/>
+              <circle cx="300" cy="265" r="13" fill={currentTheme.primary} stroke={currentTheme.primary}/>
+            </svg>
+            <h1 className="text-6xl font-bold theme-text" style={{textShadow: `0 0 30px ${currentTheme.glow}`}}>
+              NeuroFab
+            </h1>
+          </div>
+          <p className="text-xl text-gray-300 font-light">
+            AI-Powered Engineering Design Generator
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            Transform ideas into CAD models, electronics BOMs, and control code
+          </p>
+        </div>
+
+        {page === 'history' ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold theme-text">Project History</h2>
+              
+              <div className="flex items-center gap-3 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20">
+                <History size={20} style={{color: currentTheme.primary}} />
+                <span className="text-sm font-medium text-gray-300">Auto-delete after:</span>
+                <select
+                  value={historyRetention}
+                  onChange={(e) => saveHistoryRetention(e.target.value)}
+                  className="bg-black text-white font-semibold outline-none cursor-pointer rounded px-3 py-1 border theme-border"
+                  style={{color: currentTheme.primary}}
+                >
+                  <option value="1hour" style={{backgroundColor: '#000'}}>1 Hour</option>
+                  <option value="1day" style={{backgroundColor: '#000'}}>1 Day</option>
+                  <option value="1week" style={{backgroundColor: '#000'}}>1 Week</option>
+                  <option value="1month" style={{backgroundColor: '#000'}}>1 Month</option>
+                  <option value="1year" style={{backgroundColor: '#000'}}>1 Year</option>
+                  <option value="never" style={{backgroundColor: '#000'}}>Never Delete</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="bg-black/40 backdrop-blur-lg rounded-lg p-4 border border-white/20 flex items-center gap-3">
+              <Search size={20} style={{color: currentTheme.primary}} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search projects by name, description, hardware..."
+                className="flex-1 bg-transparent outline-none text-white placeholder-gray-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            
+            {filteredHistory.length === 0 ? (
+              <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-12 text-center border theme-border theme-glow-sm">
+                <History size={64} className="mx-auto mb-4 theme-text opacity-50" />
+                <p className="text-gray-400 text-lg">
+                  {searchQuery ? 'No projects match your search' : 'No projects yet. Create your first design!'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filteredHistory.map((item) => {
+                  const isFavorite = favorites.includes(item.id);
+                  return (
+                    <div key={item.id} className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border theme-border hover-lift theme-glow-sm group">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 cursor-pointer" onClick={() => loadFromHistory(item)}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-2xl font-bold theme-text group-hover:text-white transition-colors">
+                              {item.plan.projectName}
+                            </h3>
+                            {isFavorite && (
+                              <Star size={20} className="theme-text" fill={currentTheme.primary} />
+                            )}
+                          </div>
+                          <p className="text-gray-300 mb-3">{item.plan.description}</p>
+                          <p className="text-sm text-gray-500">
+                            Created: {new Date(item.timestamp).toLocaleString()}
+                          </p>
+                          <p className="text-sm text-gray-400 mt-2 italic">"{item.idea}"</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(item.id);
+                            }}
+                            className="flex-shrink-0 p-3 hover:bg-yellow-500/20 rounded-lg transition-colors"
+                            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Star 
+                              size={20} 
+                              className={isFavorite ? "text-yellow-400" : "text-gray-400 hover:text-yellow-400"}
+                              fill={isFavorite ? "currentColor" : "none"}
+                            />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteFromHistory(item.id);
+                            }}
+                            className="flex-shrink-0 p-3 hover:bg-red-500/20 rounded-lg transition-colors"
+                            title="Delete project"
+                          >
+                            <Trash2 size={20} className="text-red-400 hover:text-red-300" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-4 mb-8 border theme-border theme-glow-sm">
+              <p className="text-center theme-text text-sm font-medium">
+                💡 <strong>How to use:</strong> Describe your complete project idea → Click Generate (Ctrl+G) → Browse results → Export (Ctrl+E) or Download (Ctrl+S)
+              </p>
+            </div>
+
+            <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-8 mb-8 border theme-border hover-lift theme-glow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-lg font-semibold theme-text">
+                  Describe Your Complete Project Idea
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={startVoiceInput}
+                    disabled={loading || isRecording}
+                    onMouseEnter={(e) => showTooltip(e, 'Speak your project idea')}
+                    onMouseLeave={hideTooltip}
+                    className={`${isRecording ? 'animate-pulse' : 'hover:opacity-90'} text-black font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
+                    style={{backgroundColor: isRecording ? '#ef4444' : currentTheme.primary}}
+                  >
+                    <Mic size={18} />
+                    {isRecording ? 'Listening...' : 'Voice'}
+                  </button>
+                  
+                  <label
+                    onMouseEnter={(e) => showTooltip(e, 'Upload sketch or diagram')}
+                    onMouseLeave={hideTooltip}
+                    className="text-black font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer hover:opacity-90"
+                    style={{backgroundColor: currentTheme.secondary}}
+                  >
+                    <Upload size={18} />
+                    Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={loading || analyzingImage}
+                    />
+                  </label>
+                  
+                  {idea.trim() && (
+                    <button
+                      onClick={clearDraft}
+                      onMouseEnter={(e) => showTooltip(e, 'Clear text')}
+                      onMouseLeave={hideTooltip}
+                      className="text-sm text-gray-400 hover:text-red-400 transition-colors flex items-center gap-1 px-3"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              {uploadedImage && (
+                <div className="mb-4 relative">
+                  <div className="flex items-start gap-3 rounded-lg p-3 border theme-border" style={{backgroundColor: `${currentTheme.primary}20`}}>
+                    <Image size={20} className="theme-text flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                      <p className="theme-text text-sm font-semibold mb-2">Uploaded Image</p>
+                      <img src={uploadedImage} alt="Uploaded sketch" className="max-h-32 rounded border theme-border" />
+                    </div>
+                    <button
+                      onClick={() => setUploadedImage(null)}
+                      className="text-gray-400 hover:text-white transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {analyzingImage && (
+                <div className="mb-4 rounded-lg p-4 flex items-center gap-3 border theme-border" style={{backgroundColor: `${currentTheme.primary}20`}}>
+                  <Loader2 className="animate-spin theme-text" size={20} />
+                  <p className="theme-text text-sm">Analyzing your image and generating project description...</p>
+                </div>
+              )}
+              
+              <textarea
+                value={idea}
+                onChange={(e) => setIdea(e.target.value)}
+                placeholder="Example: Build a battery-powered plant watering system using ESP32 that monitors soil moisture and automatically waters when dry. I prefer C++ and need it to run for at least 6 months on a single battery charge. Budget under $30.
+
+OR click 'Voice' to speak your idea, or 'Image' to upload a sketch!"
+                className="w-full h-40 bg-black/30 border theme-border rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 resize-none transition-all mb-4"
+                disabled={loading || analyzingImage}
+              />
+              {idea.trim() && !analyzingImage && (
+                <p className="text-xs text-gray-500 mb-2">💾 Draft auto-saved</p>
+              )}
+              
+              <button
+                onClick={generateProject}
+                disabled={loading || !idea.trim() || analyzingImage}
+                onMouseEnter={(e) => showTooltip(e, 'Generate project (Ctrl+G)')}
+                onMouseLeave={hideTooltip}
+                className="w-full theme-bg hover:opacity-90 disabled:bg-gray-700 text-black font-bold py-4 px-8 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 disabled:cursor-not-allowed theme-glow"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin" size={24} />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Zap size={24} />
+                    Generate Complete Project
+                  </>
+                )}
+              </button>
+            </div>
+
+            {loading && (
+              <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 mb-8 border theme-border theme-glow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <Loader2 className="animate-spin theme-text" size={24} />
+                  <span className="text-lg font-medium theme-text">{currentStep}</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2">
+                  <div className="theme-bg h-2 rounded-full animate-pulse transition-all duration-500" style={{width: '60%'}}></div>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-500/20 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-red-500/30 flex items-start gap-3 hover-lift">
+                <AlertCircle className="text-red-400 flex-shrink-0" size={24} />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-300 mb-2">Generation Error</h3>
+                  <p className="text-red-200 mb-3">{error}</p>
+                  {error.includes('500') || error.includes('temporarily unavailable') ? (
+                    <div className="bg-red-900/30 rounded-lg p-3 mt-3">
+                      <p className="text-red-200 text-sm font-semibold mb-2">⚠️ API Service Issue</p>
+                      <p className="text-red-300 text-sm">The AI service is experiencing high demand or temporary issues. Please:</p>
+                      <ul className="text-red-300 text-sm mt-2 space-y-1 list-disc list-inside">
+                        <li>Wait 1-2 minutes and try again</li>
+                        <li>Try using a simpler project description</li>
+                        <li>Use "Max Speed" mode for faster processing</li>
+                        <li>Check back later if the issue persists</li>
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )}
+
+            {results && (
+              <div className="space-y-6">
+                <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-6 border theme-border flex items-center justify-between hover-lift theme-glow group">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="theme-text transition-transform group-hover:scale-110" size={32} />
+                    <div>
+                      <h2 className="text-2xl font-bold theme-text">{results.plan.projectName}</h2>
+                      <p className="text-gray-300 font-light">{results.plan.description}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={downloadAllFiles}
+                    onMouseEnter={(e) => showTooltip(e, 'Download all files (Ctrl+S)')}
+                    onMouseLeave={hideTooltip}
+                    className="theme-bg hover:opacity-90 text-black font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all theme-glow-sm"
+                  >
+                    <Download size={20} />
+                    Download All
+                  </button>
+                  
+                  <button
+                    onClick={generateShareLink}
+                    onMouseEnter={(e) => showTooltip(e, 'Share project via link or QR code')}
+                    onMouseLeave={hideTooltip}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all"
+                  >
+                    <Share2 size={20} />
+                    Share
+                  </button>
+                  
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowCompareMenu(!showCompareMenu)}
+                      onMouseEnter={(e) => showTooltip(e, 'Compare with another project')}
+                      onMouseLeave={hideTooltip}
+                      className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all"
+                    >
+                      <GitCompare size={20} />
+                      Compare
+                    </button>
+                    
+                    {showCompareMenu && history.length > 0 && (
+                      <div className="absolute right-0 mt-2 bg-black/90 backdrop-blur-lg rounded-lg border theme-border shadow-2xl z-50 min-w-[250px] max-h-[300px] overflow-y-auto">
+                        <div className="p-3 border-b theme-border">
+                          <p className="text-sm text-gray-400">Select a project to compare:</p>
+                        </div>
+                        {history.filter(item => item.id !== results.id).map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => {
+                              setCompareProject(item);
+                              setCompareMode(true);
+                              setShowCompareMenu(false);
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
+                          >
+                            <div className="font-semibold theme-text text-sm">{item.plan.projectName}</div>
+                            <div className="text-xs text-gray-400 mt-1">{item.plan.hardware.platform}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="relative">
+                    <button
+                      onClick={() => setExportFormat(exportFormat ? null : 'menu')}
+                      onMouseEnter={(e) => showTooltip(e, 'Export in different formats (Ctrl+E)')}
+                      onMouseLeave={hideTooltip}
+                      className="bg-black/50 hover:bg-black/70 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all border theme-border"
+                    >
+                      <FileCode size={20} />
+                      Export As...
+                    </button>
+                    
+                    {exportFormat === 'menu' && (
+                      <div className="absolute right-0 mt-2 bg-black/90 backdrop-blur-lg rounded-lg border theme-border shadow-2xl z-50 min-w-[200px]">
+                        <button
+                          onClick={exportToPDF}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors theme-text text-left"
+                        >
+                          <FileText size={18} />
+                          <div>
+                            <div className="font-semibold">PDF Report</div>
+                            <div className="text-xs text-gray-400">Complete documentation</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={exportToExcel}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors theme-text text-left"
+                        >
+                          <FileSpreadsheet size={18} />
+                          <div>
+                            <div className="font-semibold">Excel/CSV</div>
+                            <div className="text-xs text-gray-400">BOM spreadsheet</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={exportToMarkdown}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors theme-text text-left rounded-b-lg"
+                        >
+                          <FileImage size={18} />
+                          <div>
+                            <div className="font-semibold">Markdown</div>
+                            <div className="text-xs text-gray-400">README.md format</div>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 overflow-x-auto">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all whitespace-nowrap ${
+                          isActive ? 'tab-active' : 'tab-inactive hover:opacity-80'
+                        }`}
+                      >
+                        <Icon size={20} />
+                        {tab.name}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-black/40 backdrop-blur-lg rounded-2xl p-8 border theme-border min-h-[400px]">
+                  
+                  {compareMode && compareProject ? (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-3xl font-bold theme-text">Comparison View</h2>
+                        <button
+                          onClick={() => {
+                            setCompareMode(false);
+                            setCompareProject(null);
+                          }}
+                          className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                        >
+                          <X size={18} />
+                          Exit Compare
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* Current Project */}
+                        <div className="space-y-4">
+                          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                            <h3 className="text-xl font-bold text-green-400 mb-2">Current Project</h3>
+                            <p className="text-2xl font-bold theme-text">{results.plan.projectName}</p>
+                            <p className="text-gray-400 text-sm mt-1">{results.plan.description}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Hardware</h4>
+                            <p className="text-gray-300">{results.plan.hardware.platform}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Language</h4>
+                            <p className="text-gray-300">{results.plan.language.primary}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Total Cost</h4>
+                            <p className="text-2xl font-bold text-green-400">{results.bom.totalEstimatedCost}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Components</h4>
+                            <p className="text-gray-300">{results.bom.components.length} components</p>
+                            <ul className="text-sm text-gray-400 mt-2 space-y-1">
+                              {results.bom.components.slice(0, 5).map((comp, idx) => (
+                                <li key={idx}>• {comp.name}</li>
+                              ))}
+                              {results.bom.components.length > 5 && (
+                                <li className="text-gray-500">... and {results.bom.components.length - 5} more</li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+                        
+                        {/* Compare Project */}
+                        <div className="space-y-4">
+                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                            <h3 className="text-xl font-bold text-blue-400 mb-2">Comparing With</h3>
+                            <p className="text-2xl font-bold theme-text">{compareProject.plan.projectName}</p>
+                            <p className="text-gray-400 text-sm mt-1">{compareProject.plan.description}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Hardware</h4>
+                            <p className="text-gray-300">{compareProject.plan.hardware.platform}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Language</h4>
+                            <p className="text-gray-300">{compareProject.plan.language.primary}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Total Cost</h4>
+                            <p className="text-2xl font-bold text-blue-400">{compareProject.bom.totalEstimatedCost}</p>
+                          </div>
+                          
+                          <div className="bg-black/30 rounded-xl p-4 border theme-border">
+                            <h4 className="font-semibold theme-text mb-2">Components</h4>
+                            <p className="text-gray-300">{compareProject.bom.components.length} components</p>
+                            <ul className="text-sm text-gray-400 mt-2 space-y-1">
+                              {compareProject.bom.components.slice(0, 5).map((comp, idx) => (
+                                <li key={idx}>• {comp.name}</li>
+                              ))}
+                              {compareProject.bom.components.length > 5 && (
+                                <li className="text-gray-500">... and {compareProject.bom.components.length - 5} more</li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6 mt-6">
+                        <h4 className="font-bold text-yellow-400 text-lg mb-3">Key Differences</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-400 mb-1">Cost Difference:</p>
+                            <p className="font-mono text-white">
+                              {parseFloat(results.bom.totalEstimatedCost.replace(/[^0-9.]/g, '')) > 
+                               parseFloat(compareProject.bom.totalEstimatedCost.replace(/[^0-9.]/g, '')) 
+                                ? '🔴 Higher' : '🟢 Lower'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 mb-1">Component Count:</p>
+                            <p className="font-mono text-white">
+                              {results.bom.components.length} vs {compareProject.bom.components.length}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                  <>
+                  
+                  {activeTab === 'plan' && (
+                    <div className="space-y-6">
+                      <h2 className="text-3xl font-bold theme-text mb-6">Project Plan</h2>
+                      
+                      <div className="grid gap-6">
+                        <div className="bg-black/30 rounded-xl p-5 border theme-border">
+                          <h3 className="font-semibold theme-text text-lg mb-2">Selected Hardware</h3>
+                          <p className="text-gray-100 font-medium text-xl mb-2">{results.plan.hardware.platform}</p>
+                          <p className="text-gray-400 text-sm">{results.plan.hardware.justification}</p>
+                        </div>
+                        
+                        <div className="bg-black/30 rounded-xl p-5 border theme-border">
+                          <h3 className="font-semibold theme-text text-lg mb-2">Programming Language</h3>
+                          <p className="text-gray-100 font-medium text-xl mb-2">{results.plan.language.primary}</p>
+                          <p className="text-gray-400 text-sm">{results.plan.language.justification}</p>
+                        </div>
+                        
+                        <div className="bg-black/30 rounded-xl p-5 border theme-border">
+                          <h3 className="font-semibold theme-text text-lg mb-2">CAD Requirements</h3>
+                          <p className="text-gray-300">{results.plan.cadRequirements}</p>
+                        </div>
+                        
+                        <div className="bg-black/30 rounded-xl p-5 border theme-border">
+                          <h3 className="font-semibold theme-text text-lg mb-2">Electronics Components</h3>
+                          <ul className="list-disc list-inside text-gray-300 space-y-1">
+                            {results.plan.electronicsComponents.map((comp, idx) => (
+                              <li key={idx}>{comp}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div className="bg-black/30 rounded-xl p-5 border theme-border">
+                          <h3 className="font-semibold theme-text text-lg mb-2">Functional Requirements</h3>
+                          <p className="text-gray-300">{results.plan.functionalRequirements}</p>
+                        </div>
+                        
+                        <div className="bg-black/30 rounded-xl p-5 border theme-border">
+                          <h3 className="font-semibold theme-text text-lg mb-2">Pin Requirements</h3>
+                          <p className="text-gray-300">{results.plan.pinRequirements}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'cad' && (
+                    <div className="space-y-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <h2 className="text-2xl sm:text-3xl font-bold theme-text">3D CAD Model (OpenSCAD)</h2>
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            onClick={() => setShow3DPreview(!show3DPreview)}
+                            className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm"
+                          >
+                            <Eye size={18} />
+                            {show3DPreview ? 'Hide' : 'Preview'}
+                          </button>
+                          <button
+                            onClick={() => copyToClipboard(results.openscadCode, 'cad')}
+                            className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm"
+                          >
+                            {copiedSection === 'cad' ? (
+                              <>
+                                <Check size={18} className="theme-text" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={18} />
+                                Copy
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`)}
+                            className="theme-bg hover:opacity-90 text-black font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center gap-2 transition-all text-sm"
+                          >
+                            <Download size={18} />
+                            <span className="hidden sm:inline">Download .scad</span>
+                            <span className="sm:hidden">Download</span>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {show3DPreview && (
+                        <div className="bg-black/50 p-6 rounded-xl border theme-border">
+                          <div className="aspect-video bg-gradient-to-br from-gray-900 to-black rounded-lg flex items-center justify-center border-2 border-dashed border-gray-700">
+                            <div className="text-center">
+                              <Box size={64} className="mx-auto mb-4 theme-text opacity-50" />
+                              <p className="text-gray-400 text-lg mb-2">3D Preview Coming Soon</p>
+                              <p className="text-gray-500 text-sm">Download the .scad file and open in OpenSCAD</p>
+                              <a 
+                                href="https://openscad.org/downloads.html" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-block mt-4 theme-text hover:underline text-sm"
+                              >
+                                Download OpenSCAD →
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <pre className="bg-black/50 p-4 sm:p-6 rounded-xl overflow-x-auto text-xs sm:text-sm border theme-border max-h-[400px] sm:max-h-[600px]">
+                        <code className="text-gray-300">{results.openscadCode}</code>
+                      </pre>
+                    </div>
+                  )}
+
+                  {activeTab === 'pcb' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-3xl font-bold theme-text">PCB Layout Preview</h2>
+                        <button
+                          onClick={() => setShowPCBPreview(!showPCBPreview)}
+                          className="theme-bg hover:opacity-90 text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                        >
+                          <Cpu size={20} />
+                          {showPCBPreview ? 'Hide' : 'Show'} Layout
+                        </button>
+                      </div>
+                      
+                      {showPCBPreview && (
+                        <div className="bg-black/50 p-6 rounded-xl border theme-border">
+                          <div className="bg-white rounded-lg p-4" dangerouslySetInnerHTML={{ __html: generatePCBLayout() }} />
+                          <div className="mt-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                            <h4 className="font-bold text-blue-400 mb-2">PCB Layout Information</h4>
+                            <ul className="text-sm text-gray-300 space-y-1">
+                              <li>• <strong>Board Size:</strong> Optimized for {results.plan.hardware.platform}</li>
+                              <li>• <strong>Layers:</strong> 2-layer design (Top + Bottom)</li>
+                              <li>• <strong>Main IC:</strong> {results.plan.hardware.platform} at center</li>
+                              <li>• <strong>Components:</strong> {results.bom.components.length} total components</li>
+                              <li>• <strong>Power Rails:</strong> +VCC (Red) and GND (Blue)</li>
+                              <li>• <strong>Mounting:</strong> 4 corner mounting holes</li>
+                            </ul>
+                          </div>
+                          <div className="mt-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                            <p className="text-yellow-400 text-sm">
+                              ⚠️ <strong>Note:</strong> This is a conceptual layout. For production PCBs, use professional tools like KiCAD, Eagle, or Altium Designer.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="bg-black/50 p-6 rounded-xl border theme-border">
+                        <h3 className="text-xl font-bold theme-text mb-4">PCB Design Recommendations</h3>
+                        <div className="space-y-3 text-gray-300">
+                          <p><strong className="theme-text">Trace Width:</strong> Use 0.25mm for signals, 0.5mm+ for power</p>
+                          <p><strong className="theme-text">Clearance:</strong> Maintain 0.2mm minimum between traces</p>
+                          <p><strong className="theme-text">Via Size:</strong> 0.8mm drill, 1.2mm pad diameter</p>
+                          <p><strong className="theme-text">Ground Plane:</strong> Use copper pour on bottom layer for GND</p>
+                          <p><strong className="theme-text">Decoupling:</strong> Place 0.1µF caps near {results.plan.hardware.platform} power pins</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'bom' && (
+                    <div className="space-y-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <h2 className="text-2xl sm:text-3xl font-bold theme-text">Bill of Materials</h2>
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            onClick={() => setShowCircuitDiagram(!showCircuitDiagram)}
+                            className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm"
+                          >
+                            <Zap size={18} />
+                            {showCircuitDiagram ? 'Hide' : 'Circuit'}
+                          </button>
+                          <button
+                            onClick={() => copyToClipboard(JSON.stringify(results.bom, null, 2), 'bom')}
+                            className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm"
+                          >
+                            {copiedSection === 'bom' ? (
+                              <>
+                                <Check size={18} className="theme-text" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={18} />
+                                Copy
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => downloadFile(JSON.stringify(results.bom, null, 2), `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.json`)}
+                            className="theme-bg hover:opacity-90 text-black font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center gap-2 transition-all text-sm"
+                          >
+                            <Download size={18} />
+                            <span className="hidden sm:inline">Download .json</span>
+                            <span className="sm:hidden">Download</span>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {showCircuitDiagram && (
+                        <div className="bg-black/50 p-4 sm:p-6 rounded-xl border theme-border">
+                          <h3 className="text-lg sm:text-xl font-bold theme-text mb-4">Visual Circuit Diagram</h3>
+                          <div className="bg-white rounded-lg p-4 overflow-auto">
+                            <pre className="mermaid text-xs sm:text-sm">
+                              {generateCircuitDiagram(results.bom)}
+                            </pre>
+                          </div>
+                          <p className="text-gray-400 text-xs sm:text-sm mt-3">
+                            💡 Tip: This diagram shows component connections. Refer to the wiring diagram below for detailed pin mappings.
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="bg-black/50 p-4 sm:p-6 rounded-xl border theme-border">
+                        <p className="font-bold theme-text text-xl sm:text-2xl">Total Estimated Cost: {results.bom.totalEstimatedCost}</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        {results.bom.components.map((comp, idx) => (
+                          <div key={idx} className="bg-black/50 p-4 sm:p-5 rounded-xl border theme-border hover-lift cursor-pointer group">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0 mb-3">
+                              <h4 className="font-semibold text-lg sm:text-xl theme-text group-hover:text-white transition-colors">{comp.name}</h4>
+                              <span className="theme-text font-mono font-bold text-base sm:text-lg">{comp.estimatedCost}</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                              <p><span className="theme-text font-semibold">Quantity:</span> {comp.quantity}</p>
+                              <p><span className="theme-text font-semibold">Supplier:</span> {comp.supplier}</p>
+                              <p className="col-span-1 sm:col-span-2"><span className="theme-text font-semibold">Part #:</span> {comp.partNumber}</p>
+                              {comp.pinConnection && <p className="col-span-1 sm:col-span-2"><span className="theme-text font-semibold">Pin:</span> {comp.pinConnection}</p>}
+                              <p className="col-span-1 sm:col-span-2"><span className="theme-text font-semibold">Purpose:</span> {comp.purpose}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="bg-black/50 p-4 sm:p-6 rounded-xl border theme-border">
+                        <h4 className="font-bold mb-3 theme-text text-lg sm:text-xl">Wiring Diagram</h4>
+                        <p className="text-gray-300 whitespace-pre-wrap font-light text-sm sm:text-base">{results.bom.connectionDiagram}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'code' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-3xl font-bold theme-text">{results.plan.hardware.platform} Control Code</h2>
+                          <p className="text-gray-400 mt-1">Language: {results.plan.language.primary}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setShowCodeEditor(!showCodeEditor);
+                              if (!showCodeEditor) {
+                                setEditedCode(results.controlCode);
+                              }
+                            }}
+                            className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border"
+                          >
+                            <Code size={20} />
+                            {showCodeEditor ? 'View Only' : 'Edit Code'}
+                          </button>
+                          <button
+                            onClick={() => copyToClipboard(showCodeEditor ? editedCode : results.controlCode, 'code')}
+                            className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border"
+                          >
+                            {copiedSection === 'code' ? (
+                              <>
+                                <Check size={20} className="theme-text" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={20} />
+                                Copy
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              const fileExt = results.plan.language.primary === 'Python' || results.plan.language.primary === 'MicroPython' 
+                                ? '.py' 
+                                : results.plan.language.primary === 'C++' || results.plan.language.primary === 'C' 
+                                ? '.ino' 
+                                : '.txt';
+                              downloadFile(showCodeEditor ? editedCode : results.controlCode, `${results.plan.projectName.replace(/\s+/g, '_')}_main${fileExt}`);
+                            }}
+                            className="theme-bg hover:opacity-90 text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                          >
+                            <Download size={20} />
+                            Download Code
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {showCodeEditor ? (
+                        <div className="space-y-4">
+                          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                            <p className="text-blue-300 text-sm flex items-center gap-2">
+                              <Code size={16} />
+                              <strong>Code Editor Mode:</strong> Make changes below. Your edits are not saved to history.
+                            </p>
+                          </div>
+                          <textarea
+                            value={editedCode}
+                            onChange={(e) => setEditedCode(e.target.value)}
+                            className="w-full h-[500px] bg-black/50 p-6 rounded-xl text-sm border theme-border text-gray-300 font-mono resize-none focus:outline-none focus:ring-2"
+                            style={{fontFamily: 'monospace'}}
+                          />
+                        </div>
+                      ) : (
+                        <pre className="bg-black/50 p-6 rounded-xl overflow-x-auto text-sm border theme-border max-h-[600px]">
+                          <code className="text-gray-300">{results.controlCode}</code>
+                        </pre>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'instructions' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-3xl font-bold theme-text">Assembly Instructions</h2>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => copyToClipboard(results.instructions, 'instructions')}
+                            className="flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border"
+                          >
+                            {copiedSection === 'instructions' ? (
+                              <>
+                                <Check size={20} className="theme-text" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={20} />
+                                Copy
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => downloadFile(results.instructions, `${results.plan.projectName.replace(/\s+/g, '_')}_INSTRUCTIONS.txt`)}
+                            className="theme-bg hover:opacity-90 text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                          >
+                            <Download size={20} />
+                            Download .txt
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-black/50 p-6 rounded-xl border theme-border">
+                        <div className="prose prose-invert max-w-none">
+                          <div className="whitespace-pre-wrap text-gray-300 font-light leading-relaxed text-base">
+                            {results.instructions}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  </>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-black/95 backdrop-blur-xl rounded-2xl border theme-border shadow-2xl theme-glow max-w-lg w-full p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold theme-text flex items-center gap-2">
+                  <Share2 size={24} />
+                  Share Project
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowShareModal(false);
+                    setShowQR(false);
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold theme-text mb-2">Share Link</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={shareLink}
+                      readOnly
+                      className="flex-1 bg-white/5 border theme-border rounded-lg px-4 py-2 text-white text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(shareLink);
+                        alert('Link copied to clipboard!');
+                      }}
+                      className="theme-bg hover:opacity-90 text-black font-semibold px-4 py-2 rounded-lg flex items-center gap-2"
+                    >
+                      <Copy size={18} />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={generateQRCode}
+                  className="w-full bg-white/10 hover:bg-white/20 border theme-border rounded-lg px-4 py-3 text-white font-semibold flex items-center justify-center gap-2 transition-all"
+                >
+                  <QrCode size={20} />
+                  {showQR ? 'Hide QR Code' : 'Generate QR Code'}
+                </button>
+                
+                {showQR && (
+                  <div className="bg-white p-6 rounded-lg flex flex-col items-center">
+                    <div className="w-48 h-48 bg-black flex items-center justify-center">
+                      <QrCode size={120} className="text-white" />
+                    </div>
+                    <p className="text-black text-sm mt-3 text-center">
+                      Scan to view project on mobile
+                    </p>
+                  </div>
+                )}
+                
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                  <p className="text-blue-300 text-sm">
+                    💡 <strong>Tip:</strong> Anyone with this link can view your project details. The link contains encoded project data.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {tooltip.show && (
+          <div 
+            className="fixed z-[100] px-3 py-2 bg-black/95 border theme-border rounded-lg text-sm text-white font-medium pointer-events-none"
+            style={{
+              left: `${tooltip.x}px`,
+              top: `${tooltip.y}px`,
+              transform: 'translate(-50%, -100%)',
+              marginTop: '-8px'
+            }}
+          >
+            {tooltip.text}
+            <div 
+              className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-black/95 border-r border-b theme-border"
+            />
+          </div>
+        )}
+        
+        {results && showChat && (
+          <div className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] bg-black/95 backdrop-blur-xl rounded-2xl border theme-border shadow-2xl theme-glow z-50 flex flex-col h-[600px]">
+            <div className="flex items-center justify-between p-4 border-b theme-border flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <MessageCircle size={20} className="theme-text" />
+                <h3 className="font-bold theme-text">AI Assistant</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowChat(false);
+                  setChatMessages([]);
+                }}
+                className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{minHeight: 0}}>
+              {chatMessages.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <MessageCircle size={48} className="mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">Ask me anything about your project!</p>
+                  <p className="text-xs mt-2">Try: "How can I reduce power consumption?" or "Explain the wiring"</p>
+                </div>
+              ) : (
+                chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] rounded-lg p-3 ${
+                      msg.role === 'user' 
+                        ? 'theme-bg text-black' 
+                        : 'bg-white/10 text-gray-200'
+                    }`}>
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white/10 rounded-lg p-3">
+                    <Loader2 className="animate-spin theme-text" size={20} />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t theme-border flex-shrink-0">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
+                  placeholder="Ask about your project..."
+                  className="flex-1 bg-white/5 border theme-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2"
+                  disabled={chatLoading}
+                />
+                <button
+                  onClick={sendChatMessage}
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="theme-bg hover:opacity-90 disabled:opacity-50 text-black font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-all disabled:cursor-not-allowed flex-shrink-0"
+                >
+                  <Send size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {results && !showChat && (
+          <button
+            onClick={() => setShowChat(true)}
+            className="fixed bottom-6 right-6 theme-bg hover:opacity-90 text-black font-bold p-4 rounded-full shadow-2xl theme-glow transition-all z-50 hover:scale-110"
+            title="Open AI Assistant"
+          >
+            <MessageCircle size={24} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
