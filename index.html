@@ -9,86 +9,766 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; }
-        #root { width: 100vw; height: 100vh; }
+        body { margin: 0; padding: 0; overflow-x: hidden; }
+        #root { width: 100vw; min-height: 100vh; }
     </style>
 </head>
 <body>
     <div id="root"></div>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script type="text/babel">
-        // Get React hooks from global
         const { useState, useEffect } = React;
-        
-        // Your artifact component code goes here
-        // INSTRUCTIONS:
-        // 1. Go back to the artifact called "NeuroFab - Fixed with Working Proxy"
-        // 2. Click the code button </> 
-        // 3. Copy EVERYTHING after "export default function NeuroFab()" 
-        // 4. Paste it here replacing this comment
-        // 5. Make sure to REMOVE any "import" statements at the top
-        // 6. The component should start with: function NeuroFab() {
-        
-        function NeuroFab() {
-            return (
-                <div style={{
-                    minHeight: '100vh',
-                    background: 'linear-gradient(to bottom right, #000, #1a4d2e, #000)',
-                    color: 'white',
-                    padding: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'Comfortaa, sans-serif'
-                }}>
-                    <div style={{textAlign: 'center', maxWidth: '800px'}}>
-                        <h1 style={{fontSize: '60px', color: '#7FFFD4', marginBottom: '20px'}}>
-                            NeuroFab
-                        </h1>
-                        <p style={{fontSize: '20px', marginBottom: '40px'}}>
-                            AI-Powered Engineering Design Generator
-                        </p>
-                        <div style={{
-                            background: 'rgba(127, 255, 212, 0.1)',
-                            border: '2px solid #7FFFD4',
-                            borderRadius: '12px',
-                            padding: '30px',
-                            textAlign: 'left'
-                        }}>
-                            <h2 style={{color: '#7FFFD4', marginBottom: '20px'}}>📋 Final Setup Step:</h2>
-                            <ol style={{lineHeight: '2', fontSize: '16px'}}>
-                                <li>In your GitHub repo, click on <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>index.html</code></li>
-                                <li>Click the <strong>pencil icon</strong> (✏️) to edit</li>
-                                <li>Find the comment that says "Your artifact component code goes here"</li>
-                                <li>Replace it with the NeuroFab component code from Claude</li>
-                                <li><strong>Important:</strong> Remove any lines that say <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>import React</code> or <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>import &#123;</code></li>
-                                <li>The code should start with: <code style={{background: '#000', padding: '2px 6px', borderRadius: '4px'}}>function NeuroFab() &#123;</code></li>
-                                <li>Click <strong>"Commit changes"</strong></li>
-                                <li>Vercel will auto-redeploy in 30 seconds!</li>
-                            </ol>
-                            <div style={{
-                                background: 'rgba(255, 193, 7, 0.1)',
-                                border: '1px solid #ffc107',
-                                borderRadius: '8px',
-                                padding: '15px',
-                                marginTop: '20px'
-                            }}>
-                                <p style={{color: '#ffc107', margin: 0}}>
-                                    💡 <strong>Tip:</strong> Ask Claude: "Show me the NeuroFab component code without imports"
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+        const { 
+            Zap, Code, Download, Loader2, CheckCircle, AlertCircle, Palette, 
+            FileText, Box, History, Trash2, Star, Search, Copy, Check, Eye, 
+            Smartphone, FileCode, FileSpreadsheet, FileImage, MessageCircle, 
+            Send, X, Archive, GitCompare, Share2, QrCode, Cpu, Mic, Upload, Image 
+        } = lucide;
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<NeuroFab />);
-        
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-    </script>
-</body>
-</html>
+        function NeuroFab() {
+          const [idea, setIdea] = useState('');
+          const [loading, setLoading] = useState(false);
+          const [currentStep, setCurrentStep] = useState('');
+          const [results, setResults] = useState(null);
+          const [error, setError] = useState(null);
+          const [theme, setTheme] = useState('mint');
+          const [activeTab, setActiveTab] = useState('plan');
+          const [page, setPage] = useState('main');
+          const [history, setHistory] = useState([]);
+          const [usingClaude, setUsingClaude] = useState(false);
+          const [historyRetention, setHistoryRetention] = useState('never');
+          const [generationMode, setGenerationMode] = useState('moderate');
+          const [skipCAD, setSkipCAD] = useState(true);
+          const [favorites, setFavorites] = useState([]);
+          const [searchQuery, setSearchQuery] = useState('');
+          const [copiedSection, setCopiedSection] = useState(null);
+          const [show3DPreview, setShow3DPreview] = useState(false);
+          const [showCircuitDiagram, setShowCircuitDiagram] = useState(false);
+          const [exportFormat, setExportFormat] = useState(null);
+          const [showCodeEditor, setShowCodeEditor] = useState(false);
+          const [editedCode, setEditedCode] = useState('');
+          const [showChat, setShowChat] = useState(false);
+          const [chatMessages, setChatMessages] = useState([]);
+          const [chatInput, setChatInput] = useState('');
+          const [chatLoading, setChatLoading] = useState(false);
+          const [compareMode, setCompareMode] = useState(false);
+          const [compareProject, setCompareProject] = useState(null);
+          const [showCompareMenu, setShowCompareMenu] = useState(false);
+          const [showShareModal, setShowShareModal] = useState(false);
+          const [shareLink, setShareLink] = useState('');
+          const [showQR, setShowQR] = useState(false);
+          const [showPCBPreview, setShowPCBPreview] = useState(false);
+          const [tooltip, setTooltip] = useState({ show: false, text: '', x: 0, y: 0 });
+          const [isRecording, setIsRecording] = useState(false);
+          const [uploadedImage, setUploadedImage] = useState(null);
+          const [analyzingImage, setAnalyzingImage] = useState(false);
+
+          const themes = {
+            mint: {
+              name: 'Glacial Mint',
+              bg: 'from-black via-green-950 to-black',
+              primary: '#7FFFD4',
+              secondary: '#5FE6B4',
+              accent: '#9FFFD4',
+              glow: 'rgba(127, 255, 212, 0.3)',
+              text: '#7FFFD4'
+            },
+            ocean: {
+              name: 'Ocean Blue',
+              bg: 'from-black via-blue-950 to-black',
+              primary: '#4A90E2',
+              secondary: '#357ABD',
+              accent: '#5DADE2',
+              glow: 'rgba(74, 144, 226, 0.3)',
+              text: '#4A90E2'
+            },
+            purple: {
+              name: 'Royal Purple',
+              bg: 'from-black via-purple-950 to-black',
+              primary: '#9B59B6',
+              secondary: '#7D3C98',
+              accent: '#BB8FCE',
+              glow: 'rgba(155, 89, 182, 0.3)',
+              text: '#9B59B6'
+            },
+            orange: {
+              name: 'Sunset Orange',
+              bg: 'from-black via-orange-950 to-black',
+              primary: '#FF8C42',
+              secondary: '#E67E22',
+              accent: '#FFAA6F',
+              glow: 'rgba(255, 140, 66, 0.3)',
+              text: '#FF8C42'
+            }
+          };
+
+          const currentTheme = themes[theme];
+
+          // Storage fallback for browsers without window.storage
+          const storage = {
+            data: {},
+            async get(key) {
+              if (typeof window.storage !== 'undefined') {
+                try {
+                  return await window.storage.get(key);
+                } catch (e) {
+                  const value = this.data[key];
+                  return value ? { key, value } : null;
+                }
+              }
+              const value = this.data[key];
+              return value ? { key, value } : null;
+            },
+            async set(key, value) {
+              if (typeof window.storage !== 'undefined') {
+                try {
+                  return await window.storage.set(key, value);
+                } catch (e) {
+                  this.data[key] = value;
+                  return { key, value };
+                }
+              }
+              this.data[key] = value;
+              return { key, value };
+            },
+            async delete(key) {
+              if (typeof window.storage !== 'undefined') {
+                try {
+                  return await window.storage.delete(key);
+                } catch (e) {
+                  delete this.data[key];
+                  return { key, deleted: true };
+                }
+              }
+              delete this.data[key];
+              return { key, deleted: true };
+            },
+            async list(prefix) {
+              if (typeof window.storage !== 'undefined') {
+                try {
+                  return await window.storage.list(prefix);
+                } catch (e) {
+                  const keys = Object.keys(this.data).filter(k => !prefix || k.startsWith(prefix));
+                  return { keys };
+                }
+              }
+              const keys = Object.keys(this.data).filter(k => !prefix || k.startsWith(prefix));
+              return { keys };
+            }
+          };
+
+          useEffect(() => {
+            loadHistory();
+            loadHistoryRetention();
+            loadFavorites();
+            loadDraft();
+            
+            const handleKeyDown = (e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                e.preventDefault();
+                if (idea.trim() && !loading && page === 'main') {
+                  generateProject();
+                }
+              }
+              if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (results) {
+                  downloadAllFiles();
+                }
+              }
+              if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                if (results) {
+                  setExportFormat(exportFormat ? null : 'menu');
+                }
+              }
+              if (e.key === 'Escape') {
+                setShowChat(false);
+                setExportFormat(null);
+                setShowCompareMenu(false);
+                setShowShareModal(false);
+                setShowQR(false);
+                setShowPCBPreview(false);
+              }
+            };
+            
+            window.addEventListener('keydown', handleKeyDown);
+            return () => window.removeEventListener('keydown', handleKeyDown);
+          }, [idea, loading, results, page, exportFormat]);
+
+          useEffect(() => {
+            if (historyRetention !== 'never') {
+              cleanupOldHistory();
+            }
+          }, [history, historyRetention]);
+
+          useEffect(() => {
+            if (idea.trim()) {
+              const timer = setTimeout(() => {
+                saveDraft();
+              }, 2000);
+              return () => clearTimeout(timer);
+            }
+          }, [idea]);
+
+          const loadHistory = async () => {
+            try {
+              const keys = await storage.list('project:');
+              if (keys && keys.keys) {
+                const projects = [];
+                for (const key of keys.keys) {
+                  try {
+                    const data = await storage.get(key);
+                    if (data && data.value) {
+                      projects.push(JSON.parse(data.value));
+                    }
+                  } catch (e) {
+                    console.log('Skipping invalid project:', key);
+                  }
+                }
+                setHistory(projects.sort((a, b) => b.timestamp - a.timestamp));
+              }
+            } catch (e) {
+              console.log('History not available yet');
+            }
+          };
+
+          const loadFavorites = async () => {
+            try {
+              const result = await storage.get('favorites');
+              if (result && result.value) {
+                setFavorites(JSON.parse(result.value));
+              }
+            } catch (e) {
+              console.log('No favorites found');
+            }
+          };
+
+          const toggleFavorite = async (projectId) => {
+            const newFavorites = favorites.includes(projectId)
+              ? favorites.filter(id => id !== projectId)
+              : [...favorites, projectId];
+            
+            setFavorites(newFavorites);
+            try {
+              await storage.set('favorites', JSON.stringify(newFavorites));
+            } catch (e) {
+              console.error('Failed to save favorites:', e);
+            }
+          };
+
+          const saveDraft = async () => {
+            try {
+              await storage.set('draft_idea', idea);
+            } catch (e) {
+              console.error('Failed to save draft:', e);
+            }
+          };
+
+          const loadDraft = async () => {
+            try {
+              const result = await storage.get('draft_idea');
+              if (result && result.value) {
+                setIdea(result.value);
+              }
+            } catch (e) {
+              console.log('No draft found');
+            }
+          };
+
+          const clearDraft = async () => {
+            try {
+              await storage.delete('draft_idea');
+              setIdea('');
+            } catch (e) {
+              console.error('Failed to clear draft:', e);
+            }
+          };
+
+          const copyToClipboard = async (text, section) => {
+            try {
+              await navigator.clipboard.writeText(text);
+              setCopiedSection(section);
+              setTimeout(() => setCopiedSection(null), 2000);
+            } catch (e) {
+              console.error('Failed to copy:', e);
+            }
+          };
+
+          const loadHistoryRetention = async () => {
+            try {
+              const result = await storage.get('history_retention');
+              if (result && result.value) {
+                setHistoryRetention(result.value);
+              }
+            } catch (e) {
+              console.log('No retention setting found');
+            }
+          };
+
+          const saveHistoryRetention = async (value) => {
+            try {
+              await storage.set('history_retention', value);
+              setHistoryRetention(value);
+              cleanupOldHistory(value);
+            } catch (e) {
+              console.error('Failed to save retention setting:', e);
+            }
+          };
+
+          const getRetentionMilliseconds = (retention) => {
+            const durations = {
+              '1hour': 60 * 60 * 1000,
+              '1day': 24 * 60 * 60 * 1000,
+              '1week': 7 * 24 * 60 * 60 * 1000,
+              '1month': 30 * 24 * 60 * 60 * 1000,
+              '1year': 365 * 24 * 60 * 60 * 1000,
+              'never': Infinity
+            };
+            return durations[retention] || Infinity;
+          };
+
+          const cleanupOldHistory = async (retention = historyRetention) => {
+            if (retention === 'never') return;
+            
+            const cutoffTime = Date.now() - getRetentionMilliseconds(retention);
+            const itemsToDelete = history.filter(item => item.timestamp < cutoffTime);
+            
+            for (const item of itemsToDelete) {
+              try {
+                await storage.delete(`project:${item.id}`);
+              } catch (e) {
+                console.error('Failed to delete old item:', e);
+              }
+            }
+            
+            if (itemsToDelete.length > 0) {
+              await loadHistory();
+            }
+          };
+
+          const saveToHistory = async (projectData) => {
+            const historyItem = {
+              id: Date.now(),
+              timestamp: Date.now(),
+              idea: idea,
+              ...projectData
+            };
+            
+            try {
+              await storage.set(`project:${historyItem.id}`, JSON.stringify(historyItem));
+              await loadHistory();
+            } catch (e) {
+              console.error('Failed to save to history:', e);
+            }
+          };
+
+          const deleteFromHistory = async (id) => {
+            try {
+              await storage.delete(`project:${id}`);
+              await loadHistory();
+            } catch (e) {
+              console.error('Failed to delete:', e);
+            }
+          };
+
+          const loadFromHistory = (item) => {
+            setResults(item);
+            setIdea(item.idea);
+            setPage('main');
+            setActiveTab('plan');
+          };
+
+          const filteredHistory = history.filter(item => {
+            if (!searchQuery.trim()) return true;
+            const query = searchQuery.toLowerCase();
+            return (
+              item.plan.projectName.toLowerCase().includes(query) ||
+              item.idea.toLowerCase().includes(query) ||
+              item.plan.description.toLowerCase().includes(query) ||
+              item.plan.hardware.platform.toLowerCase().includes(query)
+            );
+          });
+
+          const startVoiceInput = () => {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+              alert('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+              return;
+            }
+
+            try {
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              const recognition = new SpeechRecognition();
+              
+              recognition.continuous = false;
+              recognition.interimResults = false;
+              recognition.lang = 'en-US';
+
+              recognition.onstart = () => {
+                setIsRecording(true);
+              };
+
+              recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                setIdea(prev => prev ? `${prev} ${transcript}` : transcript);
+                setIsRecording(false);
+              };
+
+              recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                setIsRecording(false);
+                if (event.error === 'not-allowed') {
+                  alert('Microphone access denied. Please allow microphone access and try again.');
+                } else {
+                  alert(`Voice recognition error: ${event.error}`);
+                }
+              };
+
+              recognition.onend = () => {
+                setIsRecording(false);
+              };
+
+              recognition.start();
+            } catch (err) {
+              console.error('Failed to start voice recognition:', err);
+              alert(`Failed to start voice recognition: ${err.message}`);
+              setIsRecording(false);
+            }
+          };
+
+          const handleImageUpload = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+              alert('Please upload an image file (PNG, JPG, etc.)');
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+              setUploadedImage(event.target.result);
+              setAnalyzingImage(true);
+
+              try {
+                const response = await callAI(`You are analyzing a sketch or diagram for an electronics/engineering project. 
+
+Based on this image, describe what kind of project the user wants to build. Look for:
+- Circuit diagrams or component layouts
+- Sketches of physical enclosures or mechanisms
+- Handwritten notes or labels
+- Block diagrams showing system architecture
+- Any text or annotations
+
+Provide a detailed project description that could be used to generate a complete project plan.`);
+
+                setIdea(response);
+                setAnalyzingImage(false);
+              } catch (err) {
+                alert('Failed to analyze image. Please try again or describe your project manually.');
+                setAnalyzingImage(false);
+              }
+            };
+
+            reader.readAsDataURL(file);
+          };
+
+          const showTooltip = (e, text) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltip({
+              show: true,
+              text: text,
+              x: rect.left + rect.width / 2,
+              y: rect.top - 10
+            });
+          };
+
+          const hideTooltip = () => {
+            setTooltip({ show: false, text: '', x: 0, y: 0 });
+          };
+
+          const callAI = async (prompt, systemContext = '', mode = generationMode) => {
+            const fullPrompt = systemContext ? `${systemContext}\n\n${prompt}` : prompt;
+            
+            const modeConfig = {
+              max_speed: {
+                model: 'claude-haiku-4-20250514',
+                maxTokens: 1000,
+                temperature: 0.8
+              },
+              moderate: {
+                model: 'claude-sonnet-4-20250514',
+                maxTokens: 1500,
+                temperature: 0.7
+              },
+              max_detail: {
+                model: 'claude-sonnet-4-20250514',
+                maxTokens: 4000,
+                temperature: 0.6
+              }
+            };
+            
+            const config = modeConfig[mode];
+            
+            setUsingClaude(true);
+            const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: config.model,
+                max_tokens: config.maxTokens,
+                messages: [{
+                  role: 'user',
+                  content: fullPrompt
+                }]
+              })
+            });
+
+            if (!claudeResponse.ok) {
+              throw new Error(`API Error: The AI service is temporarily unavailable. Please try again.`);
+            }
+
+            const claudeData = await claudeResponse.json();
+            if (!claudeData.content || !claudeData.content[0] || !claudeData.content[0].text) {
+              throw new Error('Invalid response from API');
+            }
+
+            return claudeData.content[0].text;
+          };
+
+          const generateProject = async () => {
+            setLoading(true);
+            setError(null);
+            setResults(null);
+            setActiveTab('plan');
+            
+            try {
+              const promptDetail = {
+                max_speed: {
+                  planPrompt: 'Analyze and create a concise project plan with essential details only.',
+                  cadPrompt: 'Generate minimal OpenSCAD code for a basic enclosure.',
+                  bomPrompt: 'Create a basic BOM with essential components only.',
+                  codePrompt: 'Write minimal working code with basic functionality.',
+                  instructionsPrompt: 'Provide brief assembly steps.'
+                },
+                moderate: {
+                  planPrompt: 'Analyze this project idea and create a detailed plan.',
+                  cadPrompt: 'Generate OpenSCAD code for a functional, 3D-printable enclosure with mounting holes and cable management.',
+                  bomPrompt: 'Create a Bill of Materials for this electronics project.',
+                  codePrompt: 'Write code with appropriate libraries, initialization, and main loop.',
+                  instructionsPrompt: 'Write clear steps for assembly, wiring, installation, and testing.'
+                },
+                max_detail: {
+                  planPrompt: 'Carefully analyze this project in depth and create a comprehensive, detailed plan.',
+                  cadPrompt: 'Generate detailed OpenSCAD code for a professional, 3D-printable enclosure.',
+                  bomPrompt: 'Create a comprehensive BOM with detailed specifications and part numbers.',
+                  codePrompt: 'Write well-documented, production-ready code with error handling and comments.',
+                  instructionsPrompt: 'Write comprehensive assembly instructions with troubleshooting tips.'
+                }
+              };
+
+              const detail = promptDetail[generationMode];
+
+              setCurrentStep('Analyzing your idea and creating plan...');
+              const planText = await callAI(`You are an engineering assistant. ${detail.planPrompt}
+
+Project Idea: ${idea}
+
+Output ONLY valid JSON with no markdown. Start with { and end with }
+
+{
+  "projectName": "short name",
+  "description": "one sentence",
+  "hardware": {"platform": "e.g., ESP32", "justification": "why"},
+  "language": {"primary": "e.g., C++", "justification": "why"},
+  "cadRequirements": "physical parts needed",
+  "electronicsComponents": ["list"],
+  "functionalRequirements": "what code does",
+  "pinRequirements": "pins/GPIO needed"
+}`);
+              
+              const cleanedPlanText = planText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+              const plan = JSON.parse(cleanedPlanText);
+
+              setCurrentStep('Generating all components...');
+              
+              const generatePromises = (generationMode === 'max_speed' && skipCAD)
+                ? [
+                    Promise.resolve('// CAD generation skipped in max speed mode'),
+                    callAI(`${detail.bomPrompt}
+
+Project: ${plan.projectName}
+Platform: ${plan.hardware.platform}
+
+Output ONLY valid JSON. Start with { and end with }
+
+{
+  "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
+  "totalEstimatedCost": "",
+  "connectionDiagram": ""
+}`),
+                    callAI(`${detail.codePrompt}
+
+Project: ${plan.projectName}
+Platform: ${plan.hardware.platform}
+Language: ${plan.language.primary}
+
+Output ONLY code, no explanations.`)
+                  ]
+                : [
+                    callAI(`${detail.cadPrompt}
+
+Project: ${plan.projectName}
+Hardware: ${plan.hardware.platform}
+
+Output ONLY OpenSCAD code, no explanations.`),
+                    callAI(`${detail.bomPrompt}
+
+Project: ${plan.projectName}
+Platform: ${plan.hardware.platform}
+
+Output ONLY valid JSON. Start with { and end with }
+
+{
+  "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
+  "totalEstimatedCost": "",
+  "connectionDiagram": ""
+}`),
+                    callAI(`${detail.codePrompt}
+
+Project: ${plan.projectName}
+Platform: ${plan.hardware.platform}
+Language: ${plan.language.primary}
+
+Output ONLY code, no explanations.`)
+                  ];
+
+              const [openscadCode, bomText, controlCode] = await Promise.all(generatePromises);
+
+              const cleanedBomText = bomText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+              const bom = JSON.parse(cleanedBomText);
+
+              setCurrentStep('Creating assembly instructions...');
+              const instructions = await callAI(`${detail.instructionsPrompt}
+
+Project: ${plan.projectName}
+Hardware: ${plan.hardware.platform}
+Components: ${JSON.stringify(bom.components)}`);
+
+              const projectData = {
+                plan,
+                openscadCode: openscadCode.replace(/```.*?\n/g, '').replace(/```/g, ''),
+                bom,
+                controlCode: controlCode.replace(/```.*?\n/g, '').replace(/```/g, ''),
+                instructions
+              };
+
+              setResults(projectData);
+              await saveToHistory(projectData);
+              
+              setCurrentStep('');
+              setLoading(false);
+            } catch (err) {
+              setError(err.message || 'An error occurred during generation');
+              console.error('Generation error:', err);
+              setLoading(false);
+            }
+          };
+
+          const downloadFile = (content, filename) => {
+            try {
+              const blob = new Blob([content], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            } catch (err) {
+              navigator.clipboard.writeText(content).then(() => {
+                alert(`Content copied to clipboard!\nFilename: ${filename}`);
+              });
+            }
+          };
+
+          const downloadAllFiles = () => {
+            if (!results) return;
+            
+            const fileExt = results.plan.language.primary === 'Python' || results.plan.language.primary === 'MicroPython' 
+              ? '.py' 
+              : results.plan.language.primary === 'C++' || results.plan.language.primary === 'C' 
+              ? '.ino' 
+              : '.txt';
+            
+            downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`);
+            downloadFile(JSON.stringify(results.bom, null, 2), `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.json`);
+            downloadFile(results.controlCode, `${results.plan.projectName.replace(/\s+/g, '_')}_main${fileExt}`);
+            downloadFile(results.instructions, `${results.plan.projectName.replace(/\s+/g, '_')}_INSTRUCTIONS.txt`);
+          };
+
+          const generateCircuitDiagram = (bom) => {
+            if (!bom || !bom.components) return '';
+            
+            const nodes = [`  ${bom.components[0].name.split(' ')[0] || 'MCU'}[${results?.plan?.hardware?.platform || 'Microcontroller'}]`];
+            const connections = [];
+            
+            bom.components.slice(1).forEach((comp, idx) => {
+              const compName = comp.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 15);
+              nodes.push(`  ${compName}[${comp.name}]`);
+              connections.push(`  ${bom.components[0].name.split(' ')[0] || 'MCU'} -->|${comp.pinConnection || 'Pin'}| ${compName}`);
+            });
+            
+            return `graph TD\n${nodes.join('\n')}\n${connections.join('\n')}`;
+          };
+
+          const generatePCBLayout = () => {
+            return `<svg width="600" height="400" viewBox="0 0 600 400" style="background: #2d5016;">
+              <rect x="50" y="50" width="500" height="300" fill="#1a3d0a" stroke="#4a7c2f" stroke-width="2"/>
+              <circle cx="70" cy="70" r="8" fill="#888"/>
+              <circle cx="530" cy="70" r="8" fill="#888"/>
+              <circle cx="70" cy="330" r="8" fill="#888"/>
+              <circle cx="530" cy="330" r="8" fill="#888"/>
+              <rect x="250" y="150" width="100" height="100" fill="#333" stroke="#4a7c2f" stroke-width="2"/>
+              <text x="300" y="205" text-anchor="middle" fill="#7FFFD4" font-size="12">${results?.plan?.hardware?.platform || 'MCU'}</text>
+              ${results?.bom?.components.slice(1, 6).map((comp, i) => {
+                const angle = (i / 5) * 2 * Math.PI;
+                const x = 300 + Math.cos(angle) * 120;
+                const y = 200 + Math.sin(angle) * 80;
+                return `<circle cx="${x}" cy="${y}" r="15" fill="#555" stroke="#4a7c2f" stroke-width="2"/>
+                        <line x1="300" y1="200" x2="${x}" y2="${y}" stroke="#7FFFD4" stroke-width="2"/>`;
+              }).join('')}
+            </svg>`;
+          };
+
+          const generateShareLink = () => {
+            const encoded = btoa(JSON.stringify(results));
+            const link = `${window.location.origin}?project=${encoded}`;
+            setShareLink(link);
+            setShowShareModal(true);
+          };
+
+          const generateQRCode = () => {
+            setShowQR(!showQR);
+          };
+
+          const sendChatMessage = async () => {
+            if (!chatInput.trim() || !results) return;
+            
+            const userMessage = { role: 'user', content: chatInput };
+            setChatMessages(prev => [...prev, userMessage]);
+            setChatInput('');
+            setChatLoading(true);
+            
+            try {
+              const projectContext = `
+Current Project: ${results.plan.projectName}
+Hardware: ${results.plan.hardware.platform}
+Language: ${results.plan.language.primary}
+Components: ${results.bom.components.map(c => c.name).join(', ')}
+`;
+
+              const response = await callAI(`You are a helpful engineering assistant.
