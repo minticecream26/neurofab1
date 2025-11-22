@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,7 +9,6 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; padding: 0; overflow-x: hidden; }
@@ -18,14 +17,15 @@
 </head>
 <body>
     <div id="root"></div>
+    
+    <!-- Load Lucide icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { 
-            Zap, Code, Download, Loader2, CheckCircle, AlertCircle, Palette, 
-            FileText, Box, History, Trash2, Star, Search, Copy, Check, Eye, 
-            Smartphone, FileCode, FileSpreadsheet, FileImage, MessageCircle, 
-            Send, X, Archive, GitCompare, Share2, QrCode, Cpu, Mic, Upload, Image 
-        } = lucide;
+        
+        // Wait for lucide to load
+        const icons = window.lucide;
 
         function NeuroFab() {
           const [idea, setIdea] = useState('');
@@ -37,7 +37,6 @@
           const [activeTab, setActiveTab] = useState('plan');
           const [page, setPage] = useState('main');
           const [history, setHistory] = useState([]);
-          const [usingClaude, setUsingClaude] = useState(false);
           const [historyRetention, setHistoryRetention] = useState('never');
           const [generationMode, setGenerationMode] = useState('moderate');
           const [skipCAD, setSkipCAD] = useState(true);
@@ -106,8 +105,49 @@
 
           const currentTheme = themes[theme];
 
-          // Storage fallback for browsers without window.storage
-          const storage = {
+          // Simple icon component wrapper
+          const Icon = ({ name, size = 20, ...props }) => {
+            const iconRef = React.useRef(null);
+            
+            React.useEffect(() => {
+              if (iconRef.current && icons && icons[name]) {
+                const iconElement = icons[name];
+                iconRef.current.innerHTML = '';
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', size);
+                svg.setAttribute('height', size);
+                svg.setAttribute('viewBox', '0 0 24 24');
+                svg.setAttribute('fill', 'none');
+                svg.setAttribute('stroke', 'currentColor');
+                svg.setAttribute('stroke-width', '2');
+                svg.setAttribute('stroke-linecap', 'round');
+                svg.setAttribute('stroke-linejoin', 'round');
+                
+                if (typeof iconElement === 'string') {
+                  svg.innerHTML = iconElement;
+                } else if (Array.isArray(iconElement)) {
+                  iconElement.forEach(path => {
+                    const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    if (typeof path === 'string') {
+                      pathEl.setAttribute('d', path);
+                    } else {
+                      Object.keys(path).forEach(key => {
+                        pathEl.setAttribute(key, path[key]);
+                      });
+                    }
+                    svg.appendChild(pathEl);
+                  });
+                }
+                
+                iconRef.current.appendChild(svg);
+              }
+            }, [name, size]);
+            
+            return <span ref={iconRef} {...props} style={{ display: 'inline-block', lineHeight: 0, ...props.style }} />;
+          };
+
+          // Storage implementation
+          const storage = React.useMemo(() => ({
             data: {},
             async get(key) {
               if (typeof window.storage !== 'undefined') {
@@ -157,7 +197,7 @@
               const keys = Object.keys(this.data).filter(k => !prefix || k.startsWith(prefix));
               return { keys };
             }
-          };
+          }), []);
 
           useEffect(() => {
             loadHistory();
@@ -394,7 +434,7 @@
 
           const startVoiceInput = () => {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-              alert('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+              alert('Voice recognition is not supported in your browser.');
               return;
             }
 
@@ -417,13 +457,8 @@
               };
 
               recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
                 setIsRecording(false);
-                if (event.error === 'not-allowed') {
-                  alert('Microphone access denied. Please allow microphone access and try again.');
-                } else {
-                  alert(`Voice recognition error: ${event.error}`);
-                }
+                alert(`Voice recognition error: ${event.error}`);
               };
 
               recognition.onend = () => {
@@ -432,7 +467,6 @@
 
               recognition.start();
             } catch (err) {
-              console.error('Failed to start voice recognition:', err);
               alert(`Failed to start voice recognition: ${err.message}`);
               setIsRecording(false);
             }
@@ -443,7 +477,7 @@
             if (!file) return;
 
             if (!file.type.startsWith('image/')) {
-              alert('Please upload an image file (PNG, JPG, etc.)');
+              alert('Please upload an image file');
               return;
             }
 
@@ -453,21 +487,11 @@
               setAnalyzingImage(true);
 
               try {
-                const response = await callAI(`You are analyzing a sketch or diagram for an electronics/engineering project. 
-
-Based on this image, describe what kind of project the user wants to build. Look for:
-- Circuit diagrams or component layouts
-- Sketches of physical enclosures or mechanisms
-- Handwritten notes or labels
-- Block diagrams showing system architecture
-- Any text or annotations
-
-Provide a detailed project description that could be used to generate a complete project plan.`);
-
+                const response = await callAI(`Analyze this image for an electronics project and describe what the user wants to build.`);
                 setIdea(response);
                 setAnalyzingImage(false);
               } catch (err) {
-                alert('Failed to analyze image. Please try again or describe your project manually.');
+                alert('Failed to analyze image');
                 setAnalyzingImage(false);
               }
             };
@@ -512,7 +536,6 @@ Provide a detailed project description that could be used to generate a complete
             
             const config = modeConfig[mode];
             
-            setUsingClaude(true);
             const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -527,7 +550,7 @@ Provide a detailed project description that could be used to generate a complete
             });
 
             if (!claudeResponse.ok) {
-              throw new Error(`API Error: The AI service is temporarily unavailable. Please try again.`);
+              throw new Error(`API Error: The AI service is temporarily unavailable.`);
             }
 
             const claudeData = await claudeResponse.json();
@@ -547,63 +570,60 @@ Provide a detailed project description that could be used to generate a complete
             try {
               const promptDetail = {
                 max_speed: {
-                  planPrompt: 'Analyze and create a concise project plan with essential details only.',
-                  cadPrompt: 'Generate minimal OpenSCAD code for a basic enclosure.',
-                  bomPrompt: 'Create a basic BOM with essential components only.',
-                  codePrompt: 'Write minimal working code with basic functionality.',
+                  planPrompt: 'Create a concise project plan.',
+                  cadPrompt: 'Generate minimal OpenSCAD code.',
+                  bomPrompt: 'Create a basic BOM.',
+                  codePrompt: 'Write minimal working code.',
                   instructionsPrompt: 'Provide brief assembly steps.'
                 },
                 moderate: {
-                  planPrompt: 'Analyze this project idea and create a detailed plan.',
-                  cadPrompt: 'Generate OpenSCAD code for a functional, 3D-printable enclosure with mounting holes and cable management.',
-                  bomPrompt: 'Create a Bill of Materials for this electronics project.',
-                  codePrompt: 'Write code with appropriate libraries, initialization, and main loop.',
-                  instructionsPrompt: 'Write clear steps for assembly, wiring, installation, and testing.'
+                  planPrompt: 'Create a detailed plan.',
+                  cadPrompt: 'Generate OpenSCAD code for a functional enclosure.',
+                  bomPrompt: 'Create a Bill of Materials.',
+                  codePrompt: 'Write code with libraries and main loop.',
+                  instructionsPrompt: 'Write clear assembly steps.'
                 },
                 max_detail: {
-                  planPrompt: 'Carefully analyze this project in depth and create a comprehensive, detailed plan.',
-                  cadPrompt: 'Generate detailed OpenSCAD code for a professional, 3D-printable enclosure.',
-                  bomPrompt: 'Create a comprehensive BOM with detailed specifications and part numbers.',
-                  codePrompt: 'Write well-documented, production-ready code with error handling and comments.',
-                  instructionsPrompt: 'Write comprehensive assembly instructions with troubleshooting tips.'
+                  planPrompt: 'Create a comprehensive, detailed plan.',
+                  cadPrompt: 'Generate detailed OpenSCAD code.',
+                  bomPrompt: 'Create a comprehensive BOM with specifications.',
+                  codePrompt: 'Write well-documented production-ready code.',
+                  instructionsPrompt: 'Write comprehensive assembly instructions.'
                 }
               };
 
               const detail = promptDetail[generationMode];
 
-              setCurrentStep('Analyzing your idea and creating plan...');
-              const planText = await callAI(`You are an engineering assistant. ${detail.planPrompt}
+              setCurrentStep('Analyzing your idea...');
+              const planText = await callAI(`${detail.planPrompt}
 
-Project Idea: ${idea}
+Project: ${idea}
 
-Output ONLY valid JSON with no markdown. Start with { and end with }
-
+Output ONLY valid JSON:
 {
-  "projectName": "short name",
-  "description": "one sentence",
-  "hardware": {"platform": "e.g., ESP32", "justification": "why"},
-  "language": {"primary": "e.g., C++", "justification": "why"},
-  "cadRequirements": "physical parts needed",
+  "projectName": "name",
+  "description": "description",
+  "hardware": {"platform": "ESP32", "justification": "why"},
+  "language": {"primary": "C++", "justification": "why"},
+  "cadRequirements": "requirements",
   "electronicsComponents": ["list"],
-  "functionalRequirements": "what code does",
-  "pinRequirements": "pins/GPIO needed"
+  "functionalRequirements": "requirements",
+  "pinRequirements": "pins"
 }`);
               
               const cleanedPlanText = planText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
               const plan = JSON.parse(cleanedPlanText);
 
-              setCurrentStep('Generating all components...');
+              setCurrentStep('Generating components...');
               
               const generatePromises = (generationMode === 'max_speed' && skipCAD)
                 ? [
-                    Promise.resolve('// CAD generation skipped in max speed mode'),
+                    Promise.resolve('// CAD skipped'),
                     callAI(`${detail.bomPrompt}
 
 Project: ${plan.projectName}
-Platform: ${plan.hardware.platform}
 
-Output ONLY valid JSON. Start with { and end with }
-
+Output ONLY valid JSON:
 {
   "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
   "totalEstimatedCost": "",
@@ -613,24 +633,20 @@ Output ONLY valid JSON. Start with { and end with }
 
 Project: ${plan.projectName}
 Platform: ${plan.hardware.platform}
-Language: ${plan.language.primary}
 
-Output ONLY code, no explanations.`)
+Output ONLY code.`)
                   ]
                 : [
                     callAI(`${detail.cadPrompt}
 
 Project: ${plan.projectName}
-Hardware: ${plan.hardware.platform}
 
-Output ONLY OpenSCAD code, no explanations.`),
+Output ONLY OpenSCAD code.`),
                     callAI(`${detail.bomPrompt}
 
 Project: ${plan.projectName}
-Platform: ${plan.hardware.platform}
 
-Output ONLY valid JSON. Start with { and end with }
-
+Output ONLY valid JSON:
 {
   "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
   "totalEstimatedCost": "",
@@ -639,10 +655,8 @@ Output ONLY valid JSON. Start with { and end with }
                     callAI(`${detail.codePrompt}
 
 Project: ${plan.projectName}
-Platform: ${plan.hardware.platform}
-Language: ${plan.language.primary}
 
-Output ONLY code, no explanations.`)
+Output ONLY code.`)
                   ];
 
               const [openscadCode, bomText, controlCode] = await Promise.all(generatePromises);
@@ -650,11 +664,10 @@ Output ONLY code, no explanations.`)
               const cleanedBomText = bomText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
               const bom = JSON.parse(cleanedBomText);
 
-              setCurrentStep('Creating assembly instructions...');
+              setCurrentStep('Creating instructions...');
               const instructions = await callAI(`${detail.instructionsPrompt}
 
 Project: ${plan.projectName}
-Hardware: ${plan.hardware.platform}
 Components: ${JSON.stringify(bom.components)}`);
 
               const projectData = {
@@ -671,8 +684,8 @@ Components: ${JSON.stringify(bom.components)}`);
               setCurrentStep('');
               setLoading(false);
             } catch (err) {
-              setError(err.message || 'An error occurred during generation');
-              console.error('Generation error:', err);
+              setError(err.message || 'An error occurred');
+              console.error('Error:', err);
               setLoading(false);
             }
           };
@@ -690,7 +703,7 @@ Components: ${JSON.stringify(bom.components)}`);
               URL.revokeObjectURL(url);
             } catch (err) {
               navigator.clipboard.writeText(content).then(() => {
-                alert(`Content copied to clipboard!\nFilename: ${filename}`);
+                alert(`Content copied! Filename: ${filename}`);
               });
             }
           };
@@ -698,11 +711,7 @@ Components: ${JSON.stringify(bom.components)}`);
           const downloadAllFiles = () => {
             if (!results) return;
             
-            const fileExt = results.plan.language.primary === 'Python' || results.plan.language.primary === 'MicroPython' 
-              ? '.py' 
-              : results.plan.language.primary === 'C++' || results.plan.language.primary === 'C' 
-              ? '.ino' 
-              : '.txt';
+            const fileExt = results.plan.language.primary.includes('Python') ? '.py' : '.ino';
             
             downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`);
             downloadFile(JSON.stringify(results.bom, null, 2), `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.json`);
@@ -712,14 +721,13 @@ Components: ${JSON.stringify(bom.components)}`);
 
           const generateCircuitDiagram = (bom) => {
             if (!bom || !bom.components) return '';
-            
-            const nodes = [`  ${bom.components[0].name.split(' ')[0] || 'MCU'}[${results?.plan?.hardware?.platform || 'Microcontroller'}]`];
+            const nodes = [`  MCU[${results?.plan?.hardware?.platform || 'MCU'}]`];
             const connections = [];
             
-            bom.components.slice(1).forEach((comp, idx) => {
-              const compName = comp.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 15);
+            bom.components.slice(1, 5).forEach((comp, idx) => {
+              const compName = comp.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
               nodes.push(`  ${compName}[${comp.name}]`);
-              connections.push(`  ${bom.components[0].name.split(' ')[0] || 'MCU'} -->|${comp.pinConnection || 'Pin'}| ${compName}`);
+              connections.push(`  MCU -->|${comp.pinConnection || 'Pin'}| ${compName}`);
             });
             
             return `graph TD\n${nodes.join('\n')}\n${connections.join('\n')}`;
@@ -734,75 +742,22 @@ Components: ${JSON.stringify(bom.components)}`);
               <circle cx="530" cy="330" r="8" fill="#888"/>
               <rect x="250" y="150" width="100" height="100" fill="#333" stroke="#4a7c2f" stroke-width="2"/>
               <text x="300" y="205" text-anchor="middle" fill="#7FFFD4" font-size="12">${results?.plan?.hardware?.platform || 'MCU'}</text>
-              ${results?.bom?.components.slice(1, 6).map((comp, i) => {
-                const angle = (i / 5) * 2 * Math.PI;
-                const x = 300 + Math.cos(angle) * 120;
-                const y = 200 + Math.sin(angle) * 80;
-                return `<circle cx="${x}" cy="${y}" r="15" fill="#555" stroke="#4a7c2f" stroke-width="2"/>
-                        <line x1="300" y1="200" x2="${x}" y2="${y}" stroke="#7FFFD4" stroke-width="2"/>`;
-              }).join('')}
             </svg>`;
           };
 
-          const generateShareLink = () => {
-            const encoded = btoa(JSON.stringify(results));
-            const link = `${window.location.origin}?project=${encoded}`;
-            setShareLink(link);
-            setShowShareModal(true);
-          };
-
-          const generateQRCode = () => {
-            setShowQR(!showQR);
-          };
-
-          const sendChatMessage = async () => {
-            if (!chatInput.trim() || !results) return;
-            
-            const userMessage = { role: 'user', content: chatInput };
-            setChatMessages(prev => [...prev, userMessage]);
-            setChatInput('');
-            setChatLoading(true);
-            
-            try {
-              const projectContext = `
-Current Project: ${results.plan.projectName}
-Hardware: ${results.plan.hardware.platform}
-Language: ${results.plan.language.primary}
-Components: ${results.bom.components.map(c => c.name).join(', ')}
-`;
-
-              const response = await callAI(`You are a helpful engineering assistant helping with this project:
-
-${projectContext}
-
-User Question: ${chatInput}
-
-Provide a helpful, concise answer focused on this specific project.`);
-              
-              const assistantMessage = { role: 'assistant', content: response };
-              setChatMessages(prev => [...prev, assistantMessage]);
-            } catch (err) {
-              const errorMessage = { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' };
-              setChatMessages(prev => [...prev, errorMessage]);
-            } finally {
-              setChatLoading(false);
-            }
-          };
-
           const tabs = [
-            { id: 'plan', name: 'Project Plan', icon: FileText },
-            { id: 'cad', name: 'CAD Model', icon: Box },
-            { id: 'pcb', name: 'PCB Layout', icon: Cpu },
-            { id: 'bom', name: 'Electronics BOM', icon: Zap },
-            { id: 'code', name: 'Control Code', icon: Code },
-            { id: 'instructions', name: 'Assembly Guide', icon: CheckCircle }
+            { id: 'plan', name: 'Project Plan', icon: 'FileText' },
+            { id: 'cad', name: 'CAD Model', icon: 'Box' },
+            { id: 'pcb', name: 'PCB Layout', icon: 'Cpu' },
+            { id: 'bom', name: 'Electronics BOM', icon: 'Zap' },
+            { id: 'code', name: 'Control Code', icon: 'Code' },
+            { id: 'instructions', name: 'Assembly Guide', icon: 'CheckCircle' }
           ];
 
           return (
             <div className={`min-h-screen bg-gradient-to-br ${currentTheme.bg} text-white p-8 transition-all duration-500`}
                  style={{fontFamily: 'Comfortaa, cursive'}}>
               <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
                 .theme-glow { box-shadow: 0 0 20px ${currentTheme.glow}; }
                 .theme-glow-sm { box-shadow: 0 0 10px ${currentTheme.glow}; }
                 .hover-lift { transition: all 0.3s ease; }
@@ -812,19 +767,16 @@ Provide a helpful, concise answer focused on this specific project.`);
                 .theme-bg { background-color: ${currentTheme.primary}; }
                 .tab-active { background-color: ${currentTheme.primary}; color: #000; }
                 .tab-inactive { background-color: rgba(255, 255, 255, 0.1); color: ${currentTheme.text}; }
-                ::-webkit-scrollbar { width: 12px; height: 12px; }
-                ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 10px; }
-                ::-webkit-scrollbar-thumb { background: ${currentTheme.primary}; border-radius: 10px; }
               `}</style>
               
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-6xl mx-auto">
                 <div className="absolute top-6 left-6 z-10">
                   <button
                     onClick={() => setPage(page === 'main' ? 'history' : 'main')}
-                    className="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80 transition-all"
+                    className="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80"
                     style={{color: currentTheme.primary}}
                   >
-                    <History size={20} />
+                    <Icon name="History" size={20} />
                     <span className="font-semibold">{page === 'main' ? 'History' : 'Back'}</span>
                   </button>
                 </div>
@@ -832,7 +784,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                 <div className="absolute top-6 right-6 z-10">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-2 border border-white/20">
-                      <Palette size={20} style={{color: currentTheme.primary}} />
+                      <Icon name="Palette" size={20} style={{color: currentTheme.primary}} />
                       <select
                         value={theme}
                         onChange={(e) => setTheme(e.target.value)}
@@ -848,7 +800,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                     
                     <div className="bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20">
                       <div className="flex items-center gap-2 mb-2">
-                        <Zap size={20} style={{color: currentTheme.primary}} />
+                        <Icon name="Zap" size={20} style={{color: currentTheme.primary}} />
                         <select
                           value={generationMode}
                           onChange={(e) => setGenerationMode(e.target.value)}
@@ -897,7 +849,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                     
                     {filteredHistory.length === 0 ? (
                       <div className="bg-black/40 rounded-2xl p-12 text-center border theme-border">
-                        <History size={64} className="mx-auto mb-4 theme-text opacity-50" />
+                        <Icon name="History" size={64} className="mx-auto mb-4 theme-text opacity-50" />
                         <p className="text-gray-400">No projects yet</p>
                       </div>
                     ) : (
@@ -922,7 +874,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                       <textarea
                         value={idea}
                         onChange={(e) => setIdea(e.target.value)}
-                        placeholder="Example: Build a battery-powered plant watering system using ESP32..."
+                        placeholder="Example: Build a battery-powered plant watering system using ESP32 that monitors soil moisture..."
                         className="w-full h-40 bg-black/30 border theme-border rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none mb-4"
                         disabled={loading}
                       />
@@ -934,12 +886,12 @@ Provide a helpful, concise answer focused on this specific project.`);
                       >
                         {loading ? (
                           <>
-                            <Loader2 className="animate-spin" size={24} />
+                            <Icon name="Loader2" size={24} className="animate-spin" />
                             Generating...
                           </>
                         ) : (
                           <>
-                            <Zap size={24} />
+                            <Icon name="Zap" size={24} />
                             Generate Complete Project
                           </>
                         )}
@@ -949,7 +901,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                     {loading && (
                       <div className="bg-black/40 rounded-2xl p-6 mb-8 border theme-border">
                         <div className="flex items-center gap-3 mb-4">
-                          <Loader2 className="animate-spin theme-text" size={24} />
+                          <Icon name="Loader2" size={24} className="animate-spin theme-text" />
                           <span className="theme-text">{currentStep}</span>
                         </div>
                       </div>
@@ -972,27 +924,24 @@ Provide a helpful, concise answer focused on this specific project.`);
                             onClick={downloadAllFiles}
                             className="theme-bg text-black font-bold py-3 px-6 rounded-lg flex items-center gap-2"
                           >
-                            <Download size={20} />
+                            <Icon name="Download" size={20} />
                             Download All
                           </button>
                         </div>
 
-                        <div className="flex gap-2 overflow-x-auto">
-                          {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                              <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-6 py-3 font-semibold rounded-lg ${
-                                  activeTab === tab.id ? 'tab-active' : 'tab-inactive'
-                                }`}
-                              >
-                                <Icon size={20} />
-                                {tab.name}
-                              </button>
-                            );
-                          })}
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                          {tabs.map((tab) => (
+                            <button
+                              key={tab.id}
+                              onClick={() => setActiveTab(tab.id)}
+                              className={`flex items-center gap-2 px-6 py-3 font-semibold rounded-lg whitespace-nowrap ${
+                                activeTab === tab.id ? 'tab-active' : 'tab-inactive'
+                              }`}
+                            >
+                              <Icon name={tab.icon} size={20} />
+                              {tab.name}
+                            </button>
+                          ))}
                         </div>
 
                         <div className="bg-black/40 rounded-2xl p-8 border theme-border min-h-[400px]">
@@ -1002,13 +951,21 @@ Provide a helpful, concise answer focused on this specific project.`);
                               <div className="space-y-4">
                                 <div className="bg-black/30 rounded-xl p-5 border theme-border">
                                   <h3 className="font-semibold theme-text mb-2">Hardware</h3>
-                                  <p className="text-gray-100 mb-2">{results.plan.hardware.platform}</p>
+                                  <p className="text-gray-100 text-xl mb-2">{results.plan.hardware.platform}</p>
                                   <p className="text-gray-400 text-sm">{results.plan.hardware.justification}</p>
                                 </div>
                                 <div className="bg-black/30 rounded-xl p-5 border theme-border">
                                   <h3 className="font-semibold theme-text mb-2">Programming Language</h3>
-                                  <p className="text-gray-100 mb-2">{results.plan.language.primary}</p>
+                                  <p className="text-gray-100 text-xl mb-2">{results.plan.language.primary}</p>
                                   <p className="text-gray-400 text-sm">{results.plan.language.justification}</p>
+                                </div>
+                                <div className="bg-black/30 rounded-xl p-5 border theme-border">
+                                  <h3 className="font-semibold theme-text mb-2">Components</h3>
+                                  <ul className="list-disc list-inside text-gray-300 space-y-1">
+                                    {results.plan.electronicsComponents.map((comp, idx) => (
+                                      <li key={idx}>{comp}</li>
+                                    ))}
+                                  </ul>
                                 </div>
                               </div>
                             </div>
@@ -1021,7 +978,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                                 onClick={() => downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`)}
                                 className="theme-bg text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2 mb-4"
                               >
-                                <Download size={18} />
+                                <Icon name="Download" size={18} />
                                 Download .scad
                               </button>
                               <pre className="bg-black/50 p-6 rounded-xl overflow-x-auto text-sm border theme-border max-h-[600px]">
@@ -1038,7 +995,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                               </div>
                               <div className="space-y-4">
                                 {results.bom.components.map((comp, idx) => (
-                                  <div key={idx} className="bg-black/50 p-5 rounded-xl border theme-border">
+                                  <div key={idx} className="bg-black/50 p-5 rounded-xl border theme-border hover-lift">
                                     <h4 className="font-semibold text-xl theme-text mb-3">{comp.name}</h4>
                                     <div className="grid grid-cols-2 gap-3 text-sm text-gray-400">
                                       <p><span className="theme-text">Quantity:</span> {comp.quantity}</p>
@@ -1049,6 +1006,10 @@ Provide a helpful, concise answer focused on this specific project.`);
                                   </div>
                                 ))}
                               </div>
+                              <div className="bg-black/50 p-6 rounded-xl border theme-border">
+                                <h4 className="font-bold mb-3 theme-text text-lg">Wiring Diagram</h4>
+                                <p className="text-gray-300 whitespace-pre-wrap">{results.bom.connectionDiagram}</p>
+                              </div>
                             </div>
                           )}
 
@@ -1056,10 +1017,13 @@ Provide a helpful, concise answer focused on this specific project.`);
                             <div className="space-y-6">
                               <h2 className="text-3xl font-bold theme-text">Control Code</h2>
                               <button
-                                onClick={() => downloadFile(results.controlCode, `${results.plan.projectName.replace(/\s+/g, '_')}_main.ino`)}
+                                onClick={() => {
+                                  const ext = results.plan.language.primary.includes('Python') ? '.py' : '.ino';
+                                  downloadFile(results.controlCode, `${results.plan.projectName.replace(/\s+/g, '_')}_main${ext}`);
+                                }}
                                 className="theme-bg text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2"
                               >
-                                <Download size={20} />
+                                <Icon name="Download" size={20} />
                                 Download Code
                               </button>
                               <pre className="bg-black/50 p-6 rounded-xl overflow-x-auto text-sm border theme-border max-h-[600px]">
@@ -1072,7 +1036,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                             <div className="space-y-6">
                               <h2 className="text-3xl font-bold theme-text">Assembly Instructions</h2>
                               <div className="bg-black/50 p-6 rounded-xl border theme-border">
-                                <div className="whitespace-pre-wrap text-gray-300">{results.instructions}</div>
+                                <div className="whitespace-pre-wrap text-gray-300 leading-relaxed">{results.instructions}</div>
                               </div>
                             </div>
                           )}
@@ -1083,7 +1047,7 @@ Provide a helpful, concise answer focused on this specific project.`);
                               <div className="bg-black/50 p-6 rounded-xl border theme-border">
                                 <div dangerouslySetInnerHTML={{ __html: generatePCBLayout() }} />
                                 <p className="text-gray-400 text-sm mt-4">
-                                  ⚠️ This is a conceptual layout. Use professional tools like KiCAD for production.
+                                  ⚠️ This is a conceptual layout. Use professional tools like KiCAD for production PCBs.
                                 </p>
                               </div>
                             </div>
@@ -1098,12 +1062,16 @@ Provide a helpful, concise answer focused on this specific project.`);
           );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<NeuroFab />);
-        
+        // Initialize mermaid if available
         if (typeof mermaid !== 'undefined') {
           mermaid.initialize({ startOnLoad: true, theme: 'dark' });
         }
+
+        // Wait for DOM and render
+        window.addEventListener('DOMContentLoaded', () => {
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<NeuroFab />);
+        });
     </script>
 </body>
 </html>
