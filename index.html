@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,20 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { margin: 0; padding: 0; overflow-x: hidden; }
-        #root { width: 100vw; min-height: 100vh; }
-    </style>
 </head>
 <body>
     <div id="root"></div>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        
+    
+    <script>
+        window.addEventListener('load', function() {
+        const { useState, useEffect, createElement: h } = React;
+
         function NeuroFab() {
           const [idea, setIdea] = useState('');
           const [loading, setLoading] = useState(false);
@@ -29,530 +24,51 @@
           const [error, setError] = useState(null);
           const [theme, setTheme] = useState('mint');
           const [activeTab, setActiveTab] = useState('plan');
-          const [page, setPage] = useState('main');
-          const [history, setHistory] = useState([]);
-          const [usingClaude, setUsingClaude] = useState(false);
-          const [historyRetention, setHistoryRetention] = useState('never');
           const [generationMode, setGenerationMode] = useState('moderate');
           const [skipCAD, setSkipCAD] = useState(true);
-          const [favorites, setFavorites] = useState([]);
-          const [searchQuery, setSearchQuery] = useState('');
-          const [copiedSection, setCopiedSection] = useState(null);
-          const [show3DPreview, setShow3DPreview] = useState(false);
-          const [showCircuitDiagram, setShowCircuitDiagram] = useState(false);
-          const [exportFormat, setExportFormat] = useState(null);
-          const [showCodeEditor, setShowCodeEditor] = useState(false);
-          const [editedCode, setEditedCode] = useState('');
-          const [showChat, setShowChat] = useState(false);
-          const [chatMessages, setChatMessages] = useState([]);
-          const [chatInput, setChatInput] = useState('');
-          const [chatLoading, setChatLoading] = useState(false);
-          const [compareMode, setCompareMode] = useState(false);
-          const [compareProject, setCompareProject] = useState(null);
-          const [showCompareMenu, setShowCompareMenu] = useState(false);
-          const [showShareModal, setShowShareModal] = useState(false);
-          const [shareLink, setShareLink] = useState('');
-          const [showQR, setShowQR] = useState(false);
-          const [showPCBPreview, setShowPCBPreview] = useState(false);
-          const [tooltip, setTooltip] = useState({ show: false, text: '', x: 0, y: 0 });
-          const [isRecording, setIsRecording] = useState(false);
-          const [uploadedImage, setUploadedImage] = useState(null);
-          const [analyzingImage, setAnalyzingImage] = useState(false);
 
           const themes = {
-            mint: {
-              name: 'Glacial Mint',
-              bg: 'from-black via-green-950 to-black',
-              primary: '#7FFFD4',
-              secondary: '#5FE6B4',
-              accent: '#9FFFD4',
-              glow: 'rgba(127, 255, 212, 0.3)',
-              text: '#7FFFD4'
-            },
-            ocean: {
-              name: 'Ocean Blue',
-              bg: 'from-black via-blue-950 to-black',
-              primary: '#4A90E2',
-              secondary: '#357ABD',
-              accent: '#5DADE2',
-              glow: 'rgba(74, 144, 226, 0.3)',
-              text: '#4A90E2'
-            },
-            purple: {
-              name: 'Royal Purple',
-              bg: 'from-black via-purple-950 to-black',
-              primary: '#9B59B6',
-              secondary: '#7D3C98',
-              accent: '#BB8FCE',
-              glow: 'rgba(155, 89, 182, 0.3)',
-              text: '#9B59B6'
-            },
-            orange: {
-              name: 'Sunset Orange',
-              bg: 'from-black via-orange-950 to-black',
-              primary: '#FF8C42',
-              secondary: '#E67E22',
-              accent: '#FFAA6F',
-              glow: 'rgba(255, 140, 66, 0.3)',
-              text: '#FF8C42'
-            }
+            mint: { bg: 'from-black via-green-950 to-black', primary: '#7FFFD4', glow: 'rgba(127, 255, 212, 0.3)' },
+            ocean: { bg: 'from-black via-blue-950 to-black', primary: '#4A90E2', glow: 'rgba(74, 144, 226, 0.3)' },
+            purple: { bg: 'from-black via-purple-950 to-black', primary: '#9B59B6', glow: 'rgba(155, 89, 182, 0.3)' },
+            orange: { bg: 'from-black via-orange-950 to-black', primary: '#FF8C42', glow: 'rgba(255, 140, 66, 0.3)' }
           };
 
           const currentTheme = themes[theme];
 
-          // Storage fallback
-          const storageData = {};
-          const storage = {
-            async get(key) {
-              try {
-                if (typeof window.storage !== 'undefined') {
-                  return await window.storage.get(key);
-                }
-              } catch (e) {}
-              const value = storageData[key];
-              return value ? { key, value } : null;
-            },
-            async set(key, value) {
-              try {
-                if (typeof window.storage !== 'undefined') {
-                  return await window.storage.set(key, value);
-                }
-              } catch (e) {}
-              storageData[key] = value;
-              return { key, value };
-            },
-            async delete(key) {
-              try {
-                if (typeof window.storage !== 'undefined') {
-                  return await window.storage.delete(key);
-                }
-              } catch (e) {}
-              delete storageData[key];
-              return { key, deleted: true };
-            },
-            async list(prefix) {
-              try {
-                if (typeof window.storage !== 'undefined') {
-                  return await window.storage.list(prefix);
-                }
-              } catch (e) {}
-              const keys = Object.keys(storageData).filter(k => !prefix || k.startsWith(prefix));
-              return { keys };
-            }
-          };
-
-          useEffect(() => {
-            loadHistory();
-            loadHistoryRetention();
-            loadFavorites();
-            loadDraft();
-            
-            const handleKeyDown = (e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
-                e.preventDefault();
-                if (idea.trim() && !loading && page === 'main') {
-                  generateProject();
-                }
-              }
-              
-              if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                if (results) {
-                  downloadAllFiles();
-                }
-              }
-              
-              if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                if (results) {
-                  setExportFormat(exportFormat ? null : 'menu');
-                }
-              }
-              
-              if (e.key === 'Escape') {
-                setShowChat(false);
-                setExportFormat(null);
-                setShowCompareMenu(false);
-                setShowShareModal(false);
-                setShowQR(false);
-                setShowPCBPreview(false);
-              }
-            };
-            
-            window.addEventListener('keydown', handleKeyDown);
-            return () => window.removeEventListener('keydown', handleKeyDown);
-          }, [idea, loading, results, page, exportFormat]);
-
-          useEffect(() => {
-            if (historyRetention !== 'never') {
-              cleanupOldHistory();
-            }
-          }, [history, historyRetention]);
-
-          useEffect(() => {
-            if (idea.trim()) {
-              const timer = setTimeout(() => {
-                saveDraft();
-              }, 2000);
-              return () => clearTimeout(timer);
-            }
-          }, [idea]);
-
-          const loadHistory = async () => {
-            try {
-              const keys = await storage.list('project:');
-              if (keys && keys.keys) {
-                const projects = [];
-                for (const key of keys.keys) {
-                  try {
-                    const data = await storage.get(key);
-                    if (data && data.value) {
-                      projects.push(JSON.parse(data.value));
-                    }
-                  } catch (e) {
-                    console.log('Skipping invalid project:', key);
-                  }
-                }
-                setHistory(projects.sort((a, b) => b.timestamp - a.timestamp));
-              }
-            } catch (e) {
-              console.log('History not available yet');
-            }
-          };
-
-          const loadFavorites = async () => {
-            try {
-              const result = await storage.get('favorites');
-              if (result && result.value) {
-                setFavorites(JSON.parse(result.value));
-              }
-            } catch (e) {
-              console.log('No favorites found');
-            }
-          };
-
-          const toggleFavorite = async (projectId) => {
-            const newFavorites = favorites.includes(projectId)
-              ? favorites.filter(id => id !== projectId)
-              : [...favorites, projectId];
-            
-            setFavorites(newFavorites);
-            try {
-              await storage.set('favorites', JSON.stringify(newFavorites));
-            } catch (e) {
-              console.error('Failed to save favorites:', e);
-            }
-          };
-
-          const saveDraft = async () => {
-            try {
-              await storage.set('draft_idea', idea);
-            } catch (e) {
-              console.error('Failed to save draft:', e);
-            }
-          };
-
-          const loadDraft = async () => {
-            try {
-              const result = await storage.get('draft_idea');
-              if (result && result.value) {
-                setIdea(result.value);
-              }
-            } catch (e) {
-              console.log('No draft found');
-            }
-          };
-
-          const clearDraft = async () => {
-            try {
-              await storage.delete('draft_idea');
-              setIdea('');
-            } catch (e) {
-              console.error('Failed to clear draft:', e);
-            }
-          };
-
-          const copyToClipboard = async (text, section) => {
-            try {
-              await navigator.clipboard.writeText(text);
-              setCopiedSection(section);
-              setTimeout(() => setCopiedSection(null), 2000);
-            } catch (e) {
-              console.error('Failed to copy:', e);
-            }
-          };
-
-          const loadHistoryRetention = async () => {
-            try {
-              const result = await storage.get('history_retention');
-              if (result && result.value) {
-                setHistoryRetention(result.value);
-              }
-            } catch (e) {
-              console.log('No retention setting found');
-            }
-          };
-
-          const saveHistoryRetention = async (value) => {
-            try {
-              await storage.set('history_retention', value);
-              setHistoryRetention(value);
-              cleanupOldHistory(value);
-            } catch (e) {
-              console.error('Failed to save retention setting:', e);
-            }
-          };
-
-          const getRetentionMilliseconds = (retention) => {
-            const durations = {
-              '1hour': 60 * 60 * 1000,
-              '1day': 24 * 60 * 60 * 1000,
-              '1week': 7 * 24 * 60 * 60 * 1000,
-              '1month': 30 * 24 * 60 * 60 * 1000,
-              '1year': 365 * 24 * 60 * 60 * 1000,
-              'never': Infinity
-            };
-            return durations[retention] || Infinity;
-          };
-
-          const cleanupOldHistory = async (retention = historyRetention) => {
-            if (retention === 'never') return;
-            
-            const cutoffTime = Date.now() - getRetentionMilliseconds(retention);
-            const itemsToDelete = history.filter(item => item.timestamp < cutoffTime);
-            
-            for (const item of itemsToDelete) {
-              try {
-                await storage.delete(`project:${item.id}`);
-              } catch (e) {
-                console.error('Failed to delete old item:', e);
-              }
-            }
-            
-            if (itemsToDelete.length > 0) {
-              await loadHistory();
-            }
-          };
-
-          const saveToHistory = async (projectData) => {
-            const historyItem = {
-              id: Date.now(),
-              timestamp: Date.now(),
-              idea: idea,
-              ...projectData
-            };
-            
-            try {
-              await storage.set(`project:${historyItem.id}`, JSON.stringify(historyItem));
-              await loadHistory();
-            } catch (e) {
-              console.error('Failed to save to history:', e);
-            }
-          };
-
-          const deleteFromHistory = async (id) => {
-            try {
-              await storage.delete(`project:${id}`);
-              await loadHistory();
-            } catch (e) {
-              console.error('Failed to delete:', e);
-            }
-          };
-
-          const loadFromHistory = (item) => {
-            setResults(item);
-            setIdea(item.idea);
-            setPage('main');
-            setActiveTab('plan');
-          };
-
-          const filteredHistory = history.filter(item => {
-            if (!searchQuery.trim()) return true;
-            const query = searchQuery.toLowerCase();
-            return (
-              item.plan.projectName.toLowerCase().includes(query) ||
-              item.idea.toLowerCase().includes(query) ||
-              item.plan.description.toLowerCase().includes(query) ||
-              item.plan.hardware.platform.toLowerCase().includes(query)
-            );
-          });
-
-          const startVoiceInput = () => {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-              alert('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
-              return;
-            }
-
-            try {
-              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-              const recognition = new SpeechRecognition();
-              
-              recognition.continuous = false;
-              recognition.interimResults = false;
-              recognition.lang = 'en-US';
-
-              recognition.onstart = () => {
-                setIsRecording(true);
-              };
-
-              recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                setIdea(prev => prev ? `${prev} ${transcript}` : transcript);
-                setIsRecording(false);
-              };
-
-              recognition.onerror = (event) => {
-                setIsRecording(false);
-                if (event.error === 'not-allowed') {
-                  alert('Microphone access denied. Please allow microphone access and try again.');
-                } else {
-                  alert(`Voice recognition error: ${event.error}`);
-                }
-              };
-
-              recognition.onend = () => {
-                setIsRecording(false);
-              };
-
-              recognition.start();
-            } catch (err) {
-              alert(`Failed to start voice recognition: ${err.message}`);
-              setIsRecording(false);
-            }
-          };
-
-          const handleImageUpload = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (!file.type.startsWith('image/')) {
-              alert('Please upload an image file (PNG, JPG, etc.)');
-              return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-              setUploadedImage(event.target.result);
-              setAnalyzingImage(true);
-
-              try {
-                const response = await callAI(`You are analyzing a sketch or diagram for an electronics/engineering project. 
-
-Based on this image, describe what kind of project the user wants to build. Look for:
-- Circuit diagrams or component layouts
-- Sketches of physical enclosures or mechanisms
-- Handwritten notes or labels
-- Block diagrams showing system architecture
-- Any text or annotations
-
-Provide a detailed project description that could be used to generate a complete project plan. Include:
-- What the device/system does
-- Key components you can identify
-- Any specifications or requirements visible
-- Suggested hardware platform if indicated
-
-Be specific and detailed.`);
-
-                setIdea(response);
-                setAnalyzingImage(false);
-              } catch (err) {
-                alert('Failed to analyze image. Please try again or describe your project manually.');
-                setAnalyzingImage(false);
-              }
-            };
-
-            reader.readAsDataURL(file);
-          };
-
-          const showTooltip = (e, text) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setTooltip({
-              show: true,
-              text: text,
-              x: rect.left + rect.width / 2,
-              y: rect.top - 10
-            });
-          };
-
-          const hideTooltip = () => {
-            setTooltip({ show: false, text: '', x: 0, y: 0 });
-          };
-
-          const callAI = async (prompt, systemContext = '', mode = generationMode) => {
-            const fullPrompt = systemContext ? `${systemContext}\n\n${prompt}` : prompt;
-            
-            const modeConfig = {
-              max_speed: {
-                model: 'claude-haiku-4-20250514',
-                maxTokensGemini: 800,
-                maxTokensClaude: 1000,
-                temperature: 0.8
-              },
-              moderate: {
-                model: 'claude-sonnet-4-20250514',
-                maxTokensGemini: 1200,
-                maxTokensClaude: 1500,
-                temperature: 0.7
-              },
-              max_detail: {
-                model: 'claude-sonnet-4-20250514',
-                maxTokensGemini: 2500,
-                maxTokensClaude: 4000,
-                temperature: 0.6
-              }
-            };
-            
-            const config = modeConfig[mode];
+          const callAI = async (prompt, mode = generationMode) => {
+            const config = {
+              max_speed: { model: 'claude-haiku-4-20250514', maxTokens: 1000 },
+              moderate: { model: 'claude-sonnet-4-20250514', maxTokens: 1500 },
+              max_detail: { model: 'claude-sonnet-4-20250514', maxTokens: 4000 }
+            }[mode];
             
             try {
               const response = await fetch('https://gemini-proxy-six-rouge.vercel.app/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  contents: [{
-                    parts: [{ text: fullPrompt }]
-                  }],
-                  generationConfig: {
-                    temperature: config.temperature,
-                    maxOutputTokens: config.maxTokensGemini
-                  }
+                  contents: [{ parts: [{ text: prompt }] }],
+                  generationConfig: { maxOutputTokens: config.maxTokens }
                 })
               });
-
               const data = await response.json();
-              
-              if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content) {
-                setUsingClaude(false);
+              if (response.ok && data.candidates?.[0]?.content) {
                 return data.candidates[0].content.parts[0].text;
               }
-              
-              throw new Error('Proxy request failed');
-            } catch (proxyError) {
-              setUsingClaude(true);
+              throw new Error('Proxy failed');
+            } catch (e) {
               const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   model: config.model,
-                  max_tokens: config.maxTokensClaude,
-                  messages: [{
-                    role: 'user',
-                    content: fullPrompt
-                  }]
+                  max_tokens: config.maxTokens,
+                  messages: [{ role: 'user', content: prompt }]
                 })
               });
-
-              if (!claudeResponse.ok) {
-                const errorText = await claudeResponse.text();
-                console.error('Claude API Error:', claudeResponse.status, errorText);
-                throw new Error(`API Error ${claudeResponse.status}: The AI service is temporarily unavailable. Please try again in a few moments.`);
-              }
-
+              if (!claudeResponse.ok) throw new Error('API Error');
               const claudeData = await claudeResponse.json();
-              if (!claudeData.content || !claudeData.content[0] || !claudeData.content[0].text) {
-                throw new Error('Invalid response from API');
-              }
-
               return claudeData.content[0].text;
             }
           };
@@ -561,1176 +77,196 @@ Be specific and detailed.`);
             setLoading(true);
             setError(null);
             setResults(null);
-            setActiveTab('plan');
             
             try {
-              const promptDetail = {
-                max_speed: {
-                  planPrompt: 'Analyze and create a concise project plan with essential details only.',
-                  cadPrompt: 'Generate minimal OpenSCAD code for a basic enclosure.',
-                  bomPrompt: 'Create a basic BOM with essential components only.',
-                  codePrompt: 'Write minimal working code with basic functionality.',
-                  instructionsPrompt: 'Provide brief assembly steps.'
-                },
-                moderate: {
-                  planPrompt: 'Analyze this project idea and create a detailed plan.',
-                  cadPrompt: 'Generate OpenSCAD code for this project.\n\nCreate a functional, 3D-printable enclosure. Include:\n- Mounting holes\n- Component access\n- Cable management',
-                  bomPrompt: 'Create a Bill of Materials for this electronics project.',
-                  codePrompt: 'Write code with appropriate libraries, initialization, and main loop.',
-                  instructionsPrompt: 'Write clear steps for assembly, wiring, installation, and testing.'
-                },
-                max_detail: {
-                  planPrompt: 'Carefully analyze this project idea in depth and create a comprehensive, detailed plan with thorough justifications.',
-                  cadPrompt: 'Generate detailed OpenSCAD code for this project.\n\nCreate a professional, 3D-printable enclosure with:\n- Precise mounting holes\n- Easy component access\n- Organized cable management\n- Ventilation if needed\n- Professional finish considerations\n- Assembly guides built into the design',
-                  bomPrompt: 'Create a comprehensive Bill of Materials with detailed specifications, multiple supplier options where applicable, and exact part numbers.',
-                  codePrompt: 'Write well-documented, production-ready code with:\n- Comprehensive error handling\n- Detailed comments explaining logic\n- Modular functions\n- Configuration options\n- Debugging capabilities\n- Performance optimizations',
-                  instructionsPrompt: 'Write comprehensive, step-by-step assembly instructions with:\n- Detailed preparation steps\n- Tool requirements\n- Safety considerations\n- Troubleshooting tips\n- Testing procedures\n- Calibration guidance'
-                }
-              };
+              setCurrentStep('Analyzing your idea...');
+              const planText = await callAI(`Create a project plan for: ${idea}\nOutput ONLY valid JSON:\n{"projectName":"name","description":"desc","hardware":{"platform":"ESP32","justification":"why"},"language":{"primary":"C++","justification":"why"},"cadRequirements":"req","electronicsComponents":["list"],"functionalRequirements":"req","pinRequirements":"pins"}`);
+              const plan = JSON.parse(planText.replace(/```json\s*/g, '').replace(/```/g, '').trim());
 
-              const detail = promptDetail[generationMode];
+              setCurrentStep('Generating BOM...');
+              const bomText = await callAI(`Create BOM for: ${plan.projectName}\nOutput ONLY valid JSON:\n{"components":[{"name":"","quantity":1,"partNumber":"","supplier":"","estimatedCost":"","purpose":"","pinConnection":""}],"totalEstimatedCost":"","connectionDiagram":""}`);
+              const bom = JSON.parse(bomText.replace(/```json\s*/g, '').replace(/```/g, '').trim());
 
-              setCurrentStep('Analyzing your idea and creating plan...');
-              const planText = await callAI(`You are an engineering assistant. ${detail.planPrompt}
+              setCurrentStep('Writing code...');
+              const controlCode = await callAI(`Write ${plan.language.primary} code for: ${plan.projectName}. Output ONLY code.`);
 
-Project Idea: ${idea}
+              const openscadCode = (skipCAD && generationMode === 'max_speed') 
+                ? '// CAD skipped'
+                : await callAI(`Generate OpenSCAD code for: ${plan.projectName}. Output ONLY code.`);
 
-Analyze for: hardware preferences, programming language, budget, power requirements, size constraints, performance needs, specifications.
+              setCurrentStep('Creating instructions...');
+              const instructions = await callAI(`Write assembly instructions for: ${plan.projectName}`);
 
-Select the most appropriate platform and language.
-
-CRITICAL: Output ONLY valid JSON with no markdown, no code blocks, no preamble. Start directly with { and end with }
-
-{
-  "projectName": "short name",
-  "description": "one sentence",
-  "hardware": {"platform": "e.g., ESP32", "justification": "why"},
-  "language": {"primary": "e.g., C++", "justification": "why"},
-  "cadRequirements": "physical parts needed",
-  "electronicsComponents": ["list"],
-  "functionalRequirements": "what code does",
-  "pinRequirements": "pins/GPIO needed"
-}`);
-              
-              const cleanedPlanText = planText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-              const plan = JSON.parse(cleanedPlanText);
-
-              setCurrentStep('Generating all components in parallel...');
-              
-              const generatePromises = (generationMode === 'max_speed' && skipCAD)
-                ? [
-                    Promise.resolve('// CAD generation skipped in max speed mode'),
-                    callAI(`${detail.bomPrompt}
-
-Project: ${plan.projectName}
-Platform: ${plan.hardware.platform}
-Components: ${plan.electronicsComponents.join(', ')}
-
-CRITICAL: Output ONLY valid JSON with no markdown, no code blocks. Start directly with { and end with }
-
-{
-  "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
-  "totalEstimatedCost": "",
-  "connectionDiagram": ""
-}`),
-                    callAI(`${detail.codePrompt}
-
-Project: ${plan.projectName}
-Platform: ${plan.hardware.platform}
-Language: ${plan.language.primary}
-Functionality: ${plan.functionalRequirements}
-
-Output ONLY code, no explanations.`)
-                  ]
-                : [
-                    callAI(`${detail.cadPrompt}
-
-Project: ${plan.projectName}
-Hardware: ${plan.hardware.platform}
-Requirements: ${plan.cadRequirements}
-
-Output ONLY OpenSCAD code, no explanations.`),
-
-                    callAI(`${detail.bomPrompt}
-
-Project: ${plan.projectName}
-Platform: ${plan.hardware.platform}
-Components: ${plan.electronicsComponents.join(', ')}
-Pins: ${plan.pinRequirements}
-
-CRITICAL: Output ONLY valid JSON with no markdown, no code blocks. Start directly with { and end with }
-
-{
-  "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}],
-  "totalEstimatedCost": "",
-  "connectionDiagram": ""
-}`),
-
-                    callAI(`${detail.codePrompt}
-
-Project: ${plan.projectName}
-Hardware: ${plan.hardware.platform}
-Language: ${plan.language.primary}
-Functionality: ${plan.functionalRequirements}
-
-Output ONLY code, no explanations.`)
-                  ];
-
-              const [openscadCode, bomText, controlCode] = await Promise.all(generatePromises);
-
-              const cleanedBomText = bomText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-              const bom = JSON.parse(cleanedBomText);
-
-              setCurrentStep('Creating assembly instructions...');
-              const instructions = await callAI(`${detail.instructionsPrompt}
-
-Project: ${plan.projectName}
-Hardware: ${plan.hardware.platform}
-Language: ${plan.language.primary}
-Components: ${JSON.stringify(bom.components)}
-Wiring: ${bom.connectionDiagram}`);
-
-              const projectData = {
-                plan,
-                openscadCode: openscadCode.replace(/```.*?\n/g, '').replace(/```/g, ''),
-                bom,
+              setResults({
+                plan, bom,
                 controlCode: controlCode.replace(/```.*?\n/g, '').replace(/```/g, ''),
+                openscadCode: openscadCode.replace(/```.*?\n/g, '').replace(/```/g, ''),
                 instructions
-              };
-
-              setResults(projectData);
-              await saveToHistory(projectData);
-              
-              setCurrentStep('');
+              });
               setLoading(false);
             } catch (err) {
-              setError(err.message || 'An error occurred during generation');
-              console.error('Generation error:', err);
+              setError(err.message);
               setLoading(false);
             }
           };
 
           const downloadFile = (content, filename) => {
-            try {
-              const blob = new Blob([content], { type: 'text/plain' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = filename;
-              a.style.display = 'none';
-              document.body.appendChild(a);
-              a.click();
-              
-              setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-              }, 100);
-            } catch (err) {
-              console.error('Download failed:', err);
-              navigator.clipboard.writeText(content).then(() => {
-                alert(`Download blocked by browser. Content copied to clipboard instead!\nFilename: ${filename}`);
-              }).catch(() => {
-                alert('Download blocked. Please allow downloads from this site in your browser settings.');
-              });
-            }
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
           };
 
-          const downloadAllFiles = () => {
-            if (!results) return;
-            
-            const fileExt = results.plan.language.primary === 'Python' || results.plan.language.primary === 'MicroPython' 
-              ? '.py' 
-              : results.plan.language.primary === 'C++' || results.plan.language.primary === 'C' 
-              ? '.ino' 
-              : '.txt';
-            
-            downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`);
-            downloadFile(JSON.stringify(results.bom, null, 2), `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.json`);
-            downloadFile(results.controlCode, `${results.plan.projectName.replace(/\s+/g, '_')}_main${fileExt}`);
-            downloadFile(results.instructions, `${results.plan.projectName.replace(/\s+/g, '_')}_INSTRUCTIONS.txt`);
-          };
-
-          const generateCircuitDiagram = (bom) => {
-            if (!bom || !bom.components) return '';
-            
-            const nodes = [`  ${bom.components[0].name.split(' ')[0] || 'MCU'}[${results?.plan?.hardware?.platform || 'Microcontroller'}]`];
-            const connections = [];
-            
-            bom.components.slice(1).forEach((comp, idx) => {
-              const compName = comp.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 15);
-              nodes.push(`  ${compName}[${comp.name}]`);
-              connections.push(`  ${bom.components[0].name.split(' ')[0] || 'MCU'} -->|${comp.pinConnection || 'Pin'}| ${compName}`);
-            });
-            
-            return `graph TD\n${nodes.join('\n')}\n${connections.join('\n')}`;
-          };
-
-          const exportToPDF = () => {
-            if (!results) return;
-            
-            const content = `
-# ${results.plan.projectName}
-
-## Project Overview
-${results.plan.description}
-
-## Hardware Platform
-${results.plan.hardware.platform}
-Justification: ${results.plan.hardware.justification}
-
-## Programming Language
-${results.plan.language.primary}
-Justification: ${results.plan.language.justification}
-
-## Bill of Materials
-Total Cost: ${results.bom.totalEstimatedCost}
-
-${results.bom.components.map((comp, idx) => `
-${idx + 1}. ${comp.name}
-   - Quantity: ${comp.quantity}
-   - Part Number: ${comp.partNumber}
-   - Supplier: ${comp.supplier}
-   - Cost: ${comp.estimatedCost}
-   - Purpose: ${comp.purpose}
-   ${comp.pinConnection ? `- Pin: ${comp.pinConnection}` : ''}
-`).join('\n')}
-
-## Wiring Diagram
-${results.bom.connectionDiagram}
-
-## Control Code
-\`\`\`${results.plan.language.primary.toLowerCase()}
-${results.controlCode}
-\`\`\`
-
-## Assembly Instructions
-${results.instructions}
-
-## CAD Model
-${results.openscadCode}
-`;
-            
-            downloadFile(content, `${results.plan.projectName.replace(/\s+/g, '_')}_Report.md`);
-            setExportFormat(null);
-          };
-
-          const exportToExcel = () => {
-            if (!results) return;
-            
-            const csvContent = `Component,Quantity,Part Number,Supplier,Cost,Purpose,Pin Connection\n${
-              results.bom.components.map(comp => 
-                `"${comp.name}",${comp.quantity},"${comp.partNumber}","${comp.supplier}","${comp.estimatedCost}","${comp.purpose}","${comp.pinConnection || 'N/A'}"`
-              ).join('\n')
-            }`;
-            
-            downloadFile(csvContent, `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.csv`);
-            setExportFormat(null);
-          };
-
-          const exportToMarkdown = () => {
-            if (!results) return;
-            
-            const mdContent = `# ${results.plan.projectName}
-
-> ${results.plan.description}
-
-## 📋 Project Details
-
-**Hardware Platform:** ${results.plan.hardware.platform}  
-**Programming Language:** ${results.plan.language.primary}  
-**Estimated Cost:** ${results.bom.totalEstimatedCost}
-
-## 🔧 Components
-
-| Component | Qty | Part # | Supplier | Cost | Pin |
-|-----------|-----|--------|----------|------|-----|
-${results.bom.components.map(comp => 
-  `| ${comp.name} | ${comp.quantity} | ${comp.partNumber} | ${comp.supplier} | ${comp.estimatedCost} | ${comp.pinConnection || 'N/A'} |`
-).join('\n')}
-
-## 📐 Wiring
-
-\`\`\`
-${results.bom.connectionDiagram}
-\`\`\`
-
-## 💻 Code
-
-\`\`\`${results.plan.language.primary.toLowerCase()}
-${results.controlCode}
-\`\`\`
-
-## 🔨 Assembly
-
-${results.instructions}
-`;
-            
-            downloadFile(mdContent, `${results.plan.projectName.replace(/\s+/g, '_')}_README.md`);
-            setExportFormat(null);
-          };
-
-          const sendChatMessage = async () => {
-            if (!chatInput.trim() || !results) return;
-            
-            const userMessage = { role: 'user', content: chatInput };
-            setChatMessages(prev => [...prev, userMessage]);
-            setChatInput('');
-            setChatLoading(true);
-            
-            try {
-              const projectContext = `
-Current Project: ${results.plan.projectName}
-Hardware: ${results.plan.hardware.platform}
-Language: ${results.plan.language.primary}
-Components: ${results.bom.components.map(c => c.name).join(', ')}
-`;
-
-              const response = await callAI(`You are a helpful engineering assistant helping with this project:
-
-${projectContext}
-
-User Question: ${chatInput}
-
-Provide a helpful, concise answer focused on this specific project. If the question is about modifying code, suggest specific changes. If about components, reference the actual BOM.`);
-              
-              const assistantMessage = { role: 'assistant', content: response };
-              setChatMessages(prev => [...prev, assistantMessage]);
-            } catch (err) {
-              const errorMessage = { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' };
-              setChatMessages(prev => [...prev, errorMessage]);
-            } finally {
-              setChatLoading(false);
-            }
-          };
-
-          const generatePCBLayout = () => {
-            return `<svg width="600" height="400" viewBox="0 0 600 400" style="background: #2d5016;">
-              <rect x="50" y="50" width="500" height="300" fill="#1a3d0a" stroke="#4a7c2f" stroke-width="2"/>
-              <circle cx="70" cy="70" r="8" fill="#888"/>
-              <circle cx="530" cy="70" r="8" fill="#888"/>
-              <circle cx="70" cy="330" r="8" fill="#888"/>
-              <circle cx="530" cy="330" r="8" fill="#888"/>
-              <rect x="250" y="150" width="100" height="100" fill="#333" stroke="#4a7c2f" stroke-width="2"/>
-              <text x="300" y="205" text-anchor="middle" fill="#7FFFD4" font-size="12">${results?.plan?.hardware?.platform || 'MCU'}</text>
-              ${results?.bom?.components.slice(1, 6).map((comp, i) => {
-                const angle = (i / 5) * 2 * Math.PI;
-                const x = 300 + Math.cos(angle) * 120;
-                const y = 200 + Math.sin(angle) * 80;
-                return `<circle cx="${x}" cy="${y}" r="15" fill="#555" stroke="#4a7c2f" stroke-width="2"/>
-                        <line x1="300" y1="200" x2="${x}" y2="${y}" stroke="#7FFFD4" stroke-width="2"/>`;
-              }).join('')}
-            </svg>`;
-          };
-
-          const generateShareLink = () => {
-            const encoded = btoa(JSON.stringify(results));
-            const link = `${window.location.origin}?project=${encoded}`;
-            setShareLink(link);
-            setShowShareModal(true);
-          };
-
-          const generateQRCode = () => {
-            setShowQR(!showQR);
-          };
-
-          const tabs = [
-            { id: 'plan', name: 'Project Plan', icon: 'FileText' },
-            { id: 'cad', name: 'CAD Model', icon: 'Box' },
-            { id: 'pcb', name: 'PCB Layout', icon: 'Cpu' },
-            { id: 'bom', name: 'Electronics BOM', icon: 'Zap' },
-            { id: 'code', name: 'Control Code', icon: 'Code' },
-            { id: 'instructions', name: 'Assembly Guide', icon: 'CheckCircle' }
-          ];
-
-          return React.createElement('div', {
-            className: `min-h-screen bg-gradient-to-br ${currentTheme.bg} text-white p-8 transition-all duration-500`,
+          return h('div', {
+            className: `min-h-screen bg-gradient-to-br ${currentTheme.bg} text-white p-4 md:p-8`,
             style: { fontFamily: 'Comfortaa, cursive' }
           },
-            React.createElement('style', {}, `
-              @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
-              
-              .theme-glow {
-                box-shadow: 0 0 20px ${currentTheme.glow};
-              }
-              
-              .theme-glow-sm {
-                box-shadow: 0 0 10px ${currentTheme.glow};
-              }
-              
-              .hover-lift {
-                transition: all 0.3s ease;
-              }
-              
-              .hover-lift:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 30px ${currentTheme.glow};
-              }
-              
-              .theme-border {
-                border-color: ${currentTheme.primary};
-              }
-              
-              .theme-text {
-                color: ${currentTheme.text};
-              }
-              
-              .theme-bg {
-                background-color: ${currentTheme.primary};
-              }
-              
-              .tab-active {
-                background-color: ${currentTheme.primary};
-                color: #000;
-              }
-              
-              .tab-inactive {
-                background-color: rgba(255, 255, 255, 0.1);
-                color: ${currentTheme.text};
-              }
-              
-              ::-webkit-scrollbar {
-                width: 12px;
-                height: 12px;
-              }
-              
-              ::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.3);
-                border-radius: 10px;
-              }
-              
-              ::-webkit-scrollbar-thumb {
-                background: ${currentTheme.primary};
-                border-radius: 10px;
-                border: 2px solid rgba(0, 0, 0, 0.3);
-              }
-              
-              ::-webkit-scrollbar-thumb:hover {
-                background: ${currentTheme.secondary};
-                box-shadow: 0 0 10px ${currentTheme.glow};
-              }
-              
-              * {
-                scrollbar-width: thin;
-                scrollbar-color: ${currentTheme.primary} rgba(0, 0, 0, 0.3);
-              }
-              
-              @media (max-width: 768px) {
-                .mobile-stack {
-                  flex-direction: column;
-                }
-                
-                .mobile-full {
-                  width: 100% !important;
-                }
-              }
-            `),
+            h('style', {}, `.theme-glow{box-shadow:0 0 20px ${currentTheme.glow}}.theme-border{border-color:${currentTheme.primary}}.theme-text{color:${currentTheme.primary}}.theme-bg{background-color:${currentTheme.primary}}`),
             
-            React.createElement('div', { className: 'max-w-6xl mx-auto px-4 sm:px-6 lg:px-8' },
-              // Top left button
-              React.createElement('div', { className: 'absolute top-6 left-6 z-10' },
-                React.createElement('button', {
-                  onClick: () => setPage(page === 'main' ? 'history' : 'main'),
-                  className: 'flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80 transition-all',
+            h('div', { className: 'max-w-6xl mx-auto' },
+              h('div', { className: 'flex justify-end gap-2 mb-6' },
+                h('select', {
+                  value: theme,
+                  onChange: (e) => setTheme(e.target.value),
+                  className: 'bg-black text-white px-3 py-2 rounded border theme-border text-sm',
                   style: { color: currentTheme.primary }
                 },
-                  React.createElement('i', { 'data-lucide': 'history', style: { width: '20px', height: '20px' }}),
-                  React.createElement('span', { className: 'font-semibold' }, page === 'main' ? 'History' : 'Back')
+                  h('option', { value: 'mint' }, 'Mint'),
+                  h('option', { value: 'ocean' }, 'Ocean'),
+                  h('option', { value: 'purple' }, 'Purple'),
+                  h('option', { value: 'orange' }, 'Orange')
+                ),
+                h('select', {
+                  value: generationMode,
+                  onChange: (e) => setGenerationMode(e.target.value),
+                  className: 'bg-black text-white px-3 py-2 rounded border theme-border text-sm',
+                  style: { color: currentTheme.primary }
+                },
+                  h('option', { value: 'max_speed' }, '⚡ Fast'),
+                  h('option', { value: 'moderate' }, '⚙️ Moderate'),
+                  h('option', { value: 'max_detail' }, '🔬 Detailed')
                 )
               ),
 
-              // Top right controls
-              React.createElement('div', { className: 'absolute top-6 right-6 z-10' },
-                React.createElement('div', { className: 'flex flex-col gap-3' },
-                  // Theme selector
-                  React.createElement('div', { className: 'flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-2 border border-white/20' },
-                    React.createElement('i', { 'data-lucide': 'palette', style: { width: '20px', height: '20px', color: currentTheme.primary }}),
-                    React.createElement('select', {
-                      value: theme,
-                      onChange: (e) => setTheme(e.target.value),
-                      className: 'bg-black text-white font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1',
-                      style: { color: currentTheme.primary, backgroundColor: '#000' }
-                    },
-                      React.createElement('option', { value: 'mint', style: { backgroundColor: '#000', color: '#7FFFD4' }}, 'Glacial Mint'),
-                      React.createElement('option', { value: 'ocean', style: { backgroundColor: '#000', color: '#4A90E2' }}, 'Ocean Blue'),
-                      React.createElement('option', { value: 'purple', style: { backgroundColor: '#000', color: '#9B59B6' }}, 'Royal Purple'),
-                      React.createElement('option', { value: 'orange', style: { backgroundColor: '#000', color: '#FF8C42' }}, 'Sunset Orange')
+              h('div', { className: 'text-center mb-8' },
+                h('h1', { className: 'text-4xl md:text-6xl font-bold theme-text mb-2' }, 'NeuroFab'),
+                h('p', { className: 'text-lg md:text-xl text-gray-300' }, 'AI-Powered Engineering Design Generator')
+              ),
+
+              h('div', { className: 'bg-black/40 rounded-2xl p-6 mb-6 border theme-border' },
+                h('label', { className: 'block text-lg font-semibold theme-text mb-3' }, 'Describe Your Project'),
+                h('textarea', {
+                  value: idea,
+                  onChange: (e) => setIdea(e.target.value),
+                  placeholder: 'Example: Build a plant watering system using ESP32...',
+                  className: 'w-full h-32 bg-black/30 border theme-border rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none mb-3 text-sm',
+                  disabled: loading
+                }),
+                h('button', {
+                  onClick: generateProject,
+                  disabled: loading || !idea.trim(),
+                  className: 'w-full theme-bg text-black font-bold py-3 px-6 rounded-xl disabled:opacity-50 theme-glow'
+                }, loading ? '⏳ Generating...' : '⚡ Generate Project')
+              ),
+
+              loading && h('div', { className: 'bg-black/40 rounded-2xl p-6 mb-6 border theme-border' },
+                h('p', { className: 'theme-text mb-3' }, currentStep),
+                h('div', { className: 'w-full bg-white/10 rounded-full h-2' },
+                  h('div', { className: 'theme-bg h-2 rounded-full animate-pulse', style: { width: '60%' } })
+                )
+              ),
+
+              error && h('div', { className: 'bg-red-500/20 rounded-2xl p-6 mb-6 border border-red-500/30' },
+                h('p', { className: 'text-red-300' }, '⚠️ ' + error)
+              ),
+
+              results && h('div', { className: 'space-y-6' },
+                h('div', { className: 'bg-black/40 rounded-2xl p-6 border theme-border' },
+                  h('h2', { className: 'text-2xl font-bold theme-text mb-2' }, results.plan.projectName),
+                  h('p', { className: 'text-gray-300' }, results.plan.description)
+                ),
+
+                h('div', { className: 'flex gap-2 overflow-x-auto pb-2' },
+                  ['plan', 'cad', 'bom', 'code', 'instructions'].map(tab =>
+                    h('button', {
+                      key: tab,
+                      onClick: () => setActiveTab(tab),
+                      className: `px-4 py-2 font-semibold rounded-lg whitespace-nowrap text-sm ${
+                        activeTab === tab ? 'theme-bg text-black' : 'bg-white/10 theme-text'
+                      }`
+                    }, tab.charAt(0).toUpperCase() + tab.slice(1))
+                  )
+                ),
+
+                h('div', { className: 'bg-black/40 rounded-2xl p-6 border theme-border' },
+                  activeTab === 'plan' && h('div', { className: 'space-y-4' },
+                    h('h3', { className: 'text-2xl font-bold theme-text mb-4' }, 'Project Plan'),
+                    h('div', { className: 'bg-black/30 rounded-xl p-4 border theme-border' },
+                      h('h4', { className: 'font-semibold theme-text mb-2' }, 'Hardware'),
+                      h('p', { className: 'text-white text-lg' }, results.plan.hardware.platform),
+                      h('p', { className: 'text-gray-400 text-sm mt-1' }, results.plan.hardware.justification)
+                    ),
+                    h('div', { className: 'bg-black/30 rounded-xl p-4 border theme-border' },
+                      h('h4', { className: 'font-semibold theme-text mb-2' }, 'Language'),
+                      h('p', { className: 'text-white text-lg' }, results.plan.language.primary),
+                      h('p', { className: 'text-gray-400 text-sm mt-1' }, results.plan.language.justification)
                     )
                   ),
-                  
-                  // Generation mode selector
-                  React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20' },
-                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                      React.createElement('i', { 'data-lucide': 'zap', style: { width: '20px', height: '20px', color: currentTheme.primary }}),
-                      React.createElement('select', {
-                        value: generationMode,
-                        onChange: (e) => setGenerationMode(e.target.value),
-                        disabled: loading,
-                        className: 'bg-black text-white font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed',
-                        style: { color: currentTheme.primary, backgroundColor: '#000' }
-                      },
-                        React.createElement('option', { value: 'max_speed', style: { backgroundColor: '#000' }}, '⚡ Max Speed'),
-                        React.createElement('option', { value: 'moderate', style: { backgroundColor: '#000' }}, '⚙️ Moderate'),
-                        React.createElement('option', { value: 'max_detail', style: { backgroundColor: '#000' }}, '🔬 Max Detail')
+
+                  activeTab === 'cad' && h('div', {},
+                    h('h3', { className: 'text-2xl font-bold theme-text mb-4' }, 'CAD Model'),
+                    h('button', {
+                      onClick: () => downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`),
+                      className: 'theme-bg text-black font-semibold px-4 py-2 rounded-lg mb-4'
+                    }, '💾 Download'),
+                    h('pre', { className: 'bg-black/50 p-4 rounded-xl overflow-x-auto text-xs border theme-border max-h-96' },
+                      h('code', { className: 'text-gray-300' }, results.openscadCode)
+                    )
+                  ),
+
+                  activeTab === 'bom' && h('div', { className: 'space-y-4' },
+                    h('h3', { className: 'text-2xl font-bold theme-text' }, 'Bill of Materials'),
+                    h('p', { className: 'font-bold theme-text text-xl' }, 'Total: ' + results.bom.totalEstimatedCost),
+                    ...results.bom.components.map((comp, idx) =>
+                      h('div', { key: idx, className: 'bg-black/50 p-4 rounded-xl border theme-border' },
+                        h('h4', { className: 'font-semibold theme-text mb-2' }, comp.name),
+                        h('p', { className: 'text-sm text-gray-400' }, `Qty: ${comp.quantity} | Cost: ${comp.estimatedCost}`),
+                        h('p', { className: 'text-sm text-gray-400 mt-1' }, comp.purpose)
                       )
-                    ),
-                    
-                    React.createElement('div', { className: 'text-xs text-gray-400 ml-7 mb-2' },
-                      generationMode === 'max_speed' && React.createElement('div', {},
-                        React.createElement('div', { className: 'mb-1' }, '~20-30s • Claude Haiku'),
-                        React.createElement('div', {}, '800-1000 tokens • Basic outputs')
-                      ),
-                      generationMode === 'moderate' && React.createElement('div', {},
-                        React.createElement('div', { className: 'mb-1' }, '~45-60s • Claude Sonnet'),
-                        React.createElement('div', {}, '1200-1500 tokens • Balanced')
-                      ),
-                      generationMode === 'max_detail' && React.createElement('div', {},
-                        React.createElement('div', { className: 'mb-1' }, '~90-120s • Claude Sonnet'),
-                        React.createElement('div', {}, '2500-4000 tokens • Comprehensive')
-                      )
-                    ),
-                    
-                    generationMode === 'max_speed' && React.createElement('label', { className: 'flex items-center gap-2 ml-7 cursor-pointer group' },
-                      React.createElement('div', { className: 'relative w-4 h-4' },
-                        React.createElement('input', {
-                          type: 'checkbox',
-                          checked: skipCAD,
-                          onChange: (e) => setSkipCAD(e.target.checked),
-                          disabled: loading,
-                          className: 'w-full h-full cursor-pointer disabled:cursor-not-allowed appearance-none border-2 rounded transition-all',
-                          style: {
-                            borderColor: currentTheme.primary,
-                            backgroundColor: skipCAD ? currentTheme.primary : 'rgba(0, 0, 0, 0.8)',
-                            boxShadow: skipCAD ? `0 0 8px ${currentTheme.glow}` : 'none'
-                          }
-                        }),
-                        skipCAD && React.createElement('svg', {
-                          className: 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none',
-                          viewBox: '0 0 12 12',
-                          style: { color: '#000', transform: 'translate(-50%, -50%)' }
-                        },
-                          React.createElement('path', {
-                            d: 'M2 6L5 9L10 3',
-                            stroke: 'currentColor',
-                            strokeWidth: '2',
-                            strokeLinecap: 'round',
-                            strokeLinejoin: 'round',
-                            fill: 'none'
-                          })
-                        )
-                      ),
-                      React.createElement('span', { className: 'text-xs text-gray-300 group-hover:text-white transition-colors' }, 'Skip CAD generation')
+                    )
+                  ),
+
+                  activeTab === 'code' && h('div', {},
+                    h('h3', { className: 'text-2xl font-bold theme-text mb-4' }, 'Control Code'),
+                    h('button', {
+                      onClick: () => downloadFile(results.controlCode, `${results.plan.projectName.replace(/\s+/g, '_')}.ino`),
+                      className: 'theme-bg text-black font-semibold px-4 py-2 rounded-lg mb-4'
+                    }, '💾 Download'),
+                    h('pre', { className: 'bg-black/50 p-4 rounded-xl overflow-x-auto text-xs border theme-border max-h-96' },
+                      h('code', { className: 'text-gray-300' }, results.controlCode)
+                    )
+                  ),
+
+                  activeTab === 'instructions' && h('div', {},
+                    h('h3', { className: 'text-2xl font-bold theme-text mb-4' }, 'Assembly Instructions'),
+                    h('div', { className: 'bg-black/50 p-4 rounded-xl border theme-border' },
+                      h('p', { className: 'text-gray-300 whitespace-pre-wrap text-sm' }, results.instructions)
                     )
                   )
                 )
-              ),
+              )
+            )
+          );
+        }
 
-              // Header
-              React.createElement('div', { className: 'text-center mb-8' },
-                React.createElement('div', { className: 'flex items-center justify-center gap-4 mb-6' },
-                  React.createElement('svg', {
-                    width: '90',
-                    height: '90',
-                    viewBox: '0 0 400 400',
-                    className: 'transition-all duration-500',
-                    fill: currentTheme.primary,
-                    stroke: currentTheme.primary,
-                    strokeWidth: '8',
-                    strokeLinecap: 'round',
-                    strokeLinejoin: 'round'
-                  },
-                    React.createElement('rect', { x: '30', y: '30', width: '340', height: '340', rx: '50', ry: '50', fill: 'none', stroke: currentTheme.primary, strokeWidth: '12' }),
-                    React.createElement('path', { d: 'M 80 200 Q 80 160 110 160 Q 110 120 150 120 Q 190 120 205 150 Q 205 190 205 220 Q 205 260 175 275 Q 145 275 115 260 Q 80 245 80 200 Z', fill: currentTheme.primary, stroke: 'none' }),
-                    React.createElement('line', { x1: '205', y1: '155', x2: '260', y2: '155', strokeWidth: '10' }),
-                    React.createElement('path', { d: 'M 260 155 L 280 155 Q 300 155 300 135', fill: 'none', strokeWidth: '10' }),
-                    React.createElement('circle', { cx: '300', cy: '135', r: '13', fill: currentTheme.primary, stroke: currentTheme.primary }),
-                    React.createElement('line', { x1: '205', y1: '200', x2: '310', y2: '200', strokeWidth: '10' }),
-                    React.createElement('circle', { cx: '310', cy: '200', r: '13', fill: currentTheme.primary, stroke: currentTheme.primary }),
-                    React.createElement('line', { x1: '205', y1: '245', x2: '260', y2: '245', strokeWidth: '10' }),
-                    React.createElement('path', { d: 'M 260 245 L 280 245 Q 300 245 300 265', fill: 'none', strokeWidth: '10' }),
-                    React.createElement('circle', { cx: '300', cy: '265', r: '13', fill: currentTheme.primary, stroke: currentTheme.primary })
-                  ),
-                  React.createElement('h1', {
-                    className: 'text-6xl font-bold theme-text',
-                    style: { textShadow: `0 0 30px ${currentTheme.glow}` }
-                  }, 'NeuroFab')
-                ),
-                React.createElement('p', { className: 'text-xl text-gray-300 font-light' }, 'AI-Powered Engineering Design Generator'),
-                React.createElement('p', { className: 'text-sm text-gray-400 mt-2' }, 'Transform ideas into CAD models, electronics BOMs, and control code')
-              ),
-
-              // Main content area
-              page === 'history' ? 
-                // History page
-                React.createElement('div', { className: 'space-y-6' },
-                  React.createElement('div', { className: 'flex items-center justify-between mb-6' },
-                    React.createElement('h2', { className: 'text-3xl font-bold theme-text' }, 'Project History'),
-                    
-                    React.createElement('div', { className: 'flex items-center gap-3 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20' },
-                      React.createElement('i', { 'data-lucide': 'history', style: { width: '20px', height: '20px', color: currentTheme.primary }}),
-                      React.createElement('span', { className: 'text-sm font-medium text-gray-300' }, 'Auto-delete after:'),
-                      React.createElement('select', {
-                        value: historyRetention,
-                        onChange: (e) => saveHistoryRetention(e.target.value),
-                        className: 'bg-black text-white font-semibold outline-none cursor-pointer rounded px-3 py-1 border theme-border',
-                        style: { color: currentTheme.primary }
-                      },
-                        React.createElement('option', { value: '1hour', style: { backgroundColor: '#000' }}, '1 Hour'),
-                        React.createElement('option', { value: '1day', style: { backgroundColor: '#000' }}, '1 Day'),
-                        React.createElement('option', { value: '1week', style: { backgroundColor: '#000' }}, '1 Week'),
-                        React.createElement('option', { value: '1month', style: { backgroundColor: '#000' }}, '1 Month'),
-                        React.createElement('option', { value: '1year', style: { backgroundColor: '#000' }}, '1 Year'),
-                        React.createElement('option', { value: 'never', style: { backgroundColor: '#000' }}, 'Never Delete')
-                      )
-                    )
-                  ),
-
-                  React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-lg p-4 border border-white/20 flex items-center gap-3' },
-                    React.createElement('i', { 'data-lucide': 'search', style: { width: '20px', height: '20px', color: currentTheme.primary }}),
-                    React.createElement('input', {
-                      type: 'text',
-                      value: searchQuery,
-                      onChange: (e) => setSearchQuery(e.target.value),
-                      placeholder: 'Search projects by name, description, hardware...',
-                      className: 'flex-1 bg-transparent outline-none text-white placeholder-gray-500'
-                    }),
-                    searchQuery && React.createElement('button', {
-                      onClick: () => setSearchQuery(''),
-                      className: 'text-gray-400 hover:text-white transition-colors'
-                    }, '✕')
-                  ),
-                  
-                  filteredHistory.length === 0 ?
-                    React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-2xl p-12 text-center border theme-border theme-glow-sm' },
-                      React.createElement('i', { 'data-lucide': 'history', style: { width: '64px', height: '64px' }, className: 'mx-auto mb-4 theme-text opacity-50' }),
-                      React.createElement('p', { className: 'text-gray-400 text-lg' },
-                        searchQuery ? 'No projects match your search' : 'No projects yet. Create your first design!'
-                      )
-                    )
-                  :
-                    React.createElement('div', { className: 'grid gap-4' },
-                      filteredHistory.map((item) => {
-                        const isFavorite = favorites.includes(item.id);
-                        return React.createElement('div', {
-                          key: item.id,
-                          className: 'bg-black/40 backdrop-blur-lg rounded-2xl p-6 border theme-border hover-lift theme-glow-sm group'
-                        },
-                          React.createElement('div', { className: 'flex items-start justify-between gap-4' },
-                            React.createElement('div', {
-                              className: 'flex-1 cursor-pointer',
-                              onClick: () => loadFromHistory(item)
-                            },
-                              React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                React.createElement('h3', { className: 'text-2xl font-bold theme-text group-hover:text-white transition-colors' },
-                                  item.plan.projectName
-                                ),
-                                isFavorite && React.createElement('i', { 'data-lucide': 'star', style: { width: '20px', height: '20px', fill: currentTheme.primary }, className: 'theme-text' })
-                              ),
-                              React.createElement('p', { className: 'text-gray-300 mb-3' }, item.plan.description),
-                              React.createElement('p', { className: 'text-sm text-gray-500' },
-                                'Created: ', new Date(item.timestamp).toLocaleString()
-                              ),
-                              React.createElement('p', { className: 'text-sm text-gray-400 mt-2 italic' }, `"${item.idea}"`)
-                            ),
-                            React.createElement('div', { className: 'flex gap-2' },
-                              React.createElement('button', {
-                                onClick: (e) => {
-                                  e.stopPropagation();
-                                  toggleFavorite(item.id);
-                                },
-                                className: 'flex-shrink-0 p-3 hover:bg-yellow-500/20 rounded-lg transition-colors',
-                                title: isFavorite ? 'Remove from favorites' : 'Add to favorites'
-                              },
-                                React.createElement('i', {
-                                  'data-lucide': 'star',
-                                  style: { width: '20px', height: '20px', fill: isFavorite ? 'currentColor' : 'none' },
-                                  className: isFavorite ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'
-                                })
-                              ),
-                              React.createElement('button', {
-                                onClick: (e) => {
-                                  e.stopPropagation();
-                                  deleteFromHistory(item.id);
-                                },
-                                className: 'flex-shrink-0 p-3 hover:bg-red-500/20 rounded-lg transition-colors',
-                                title: 'Delete project'
-                              },
-                                React.createElement('i', { 'data-lucide': 'trash-2', style: { width: '20px', height: '20px' }, className: 'text-red-400 hover:text-red-300' })
-                              )
-                            )
-                          )
-                        );
-                      })
-                    )
-                )
-              :
-                // Main page
-                React.createElement(React.Fragment, {},
-                  React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-2xl p-4 mb-8 border theme-border theme-glow-sm' },
-                    React.createElement('p', { className: 'text-center theme-text text-sm font-medium' },
-                      '💡 ',
-                      React.createElement('strong', {}, 'How to use:'),
-                      ' Describe your complete project idea → Click Generate (Ctrl+G) → Browse results → Export (Ctrl+E) or Download (Ctrl+S)'
-                    )
-                  ),
-
-                  React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-2xl p-8 mb-8 border theme-border hover-lift theme-glow-sm' },
-                    React.createElement('div', { className: 'flex items-center justify-between mb-4' },
-                      React.createElement('label', { className: 'block text-lg font-semibold theme-text' },
-                        'Describe Your Complete Project Idea'
-                      ),
-                      React.createElement('div', { className: 'flex gap-2' },
-                        React.createElement('button', {
-                          onClick: startVoiceInput,
-                          disabled: loading || isRecording,
-                          onMouseEnter: (e) => showTooltip(e, 'Speak your project idea'),
-                          onMouseLeave: hideTooltip,
-                          className: `${isRecording ? 'animate-pulse' : 'hover:opacity-90'} text-black font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed`,
-                          style: { backgroundColor: isRecording ? '#ef4444' : currentTheme.primary }
-                        },
-                          React.createElement('i', { 'data-lucide': 'mic', style: { width: '18px', height: '18px' }}),
-                          isRecording ? 'Listening...' : 'Voice'
-                        ),
-                        
-                        React.createElement('label', {
-                          onMouseEnter: (e) => showTooltip(e, 'Upload sketch or diagram'),
-                          onMouseLeave: hideTooltip,
-                          className: 'text-black font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer hover:opacity-90',
-                          style: { backgroundColor: currentTheme.secondary }
-                        },
-                          React.createElement('i', { 'data-lucide': 'upload', style: { width: '18px', height: '18px' }}),
-                          'Image',
-                          React.createElement('input', {
-                            type: 'file',
-                            accept: 'image/*',
-                            onChange: handleImageUpload,
-                            className: 'hidden',
-                            disabled: loading || analyzingImage
-                          })
-                        ),
-                        
-                        idea.trim() && React.createElement('button', {
-                          onClick: clearDraft,
-                          onMouseEnter: (e) => showTooltip(e, 'Clear text'),
-                          onMouseLeave: hideTooltip,
-                          className: 'text-sm text-gray-400 hover:text-red-400 transition-colors flex items-center gap-1 px-3'
-                        },
-                          React.createElement('i', { 'data-lucide': 'trash-2', style: { width: '14px', height: '14px' }})
-                        )
-                      )
-                    ),
-                    
-                    uploadedImage && React.createElement('div', { className: 'mb-4 relative' },
-                      React.createElement('div', {
-                        className: 'flex items-start gap-3 rounded-lg p-3 border theme-border',
-                        style: { backgroundColor: `${currentTheme.primary}20` }
-                      },
-                        React.createElement('i', { 'data-lucide': 'image', style: { width: '20px', height: '20px' }, className: 'theme-text flex-shrink-0 mt-1' }),
-                        React.createElement('div', { className: 'flex-1' },
-                          React.createElement('p', { className: 'theme-text text-sm font-semibold mb-2' }, 'Uploaded Image'),
-                          React.createElement('img', { src: uploadedImage, alt: 'Uploaded sketch', className: 'max-h-32 rounded border theme-border' })
-                        ),
-                        React.createElement('button', {
-                          onClick: () => setUploadedImage(null),
-                          className: 'text-gray-400 hover:text-white transition-colors'
-                        },
-                          React.createElement('i', { 'data-lucide': 'x', style: { width: '18px', height: '18px' }})
-                        )
-                      )
-                    ),
-                    
-                    analyzingImage && React.createElement('div', {
-                      className: 'mb-4 rounded-lg p-4 flex items-center gap-3 border theme-border',
-                      style: { backgroundColor: `${currentTheme.primary}20` }
-                    },
-                      React.createElement('i', { 'data-lucide': 'loader-2', style: { width: '20px', height: '20px' }, className: 'animate-spin theme-text' }),
-                      React.createElement('p', { className: 'theme-text text-sm' }, 'Analyzing your image and generating project description...')
-                    ),
-                    
-                    React.createElement('textarea', {
-                      value: idea,
-                      onChange: (e) => setIdea(e.target.value),
-                      placeholder: 'Example: Build a battery-powered plant watering system using ESP32 that monitors soil moisture and automatically waters when dry. I prefer C++ and need it to run for at least 6 months on a single battery charge. Budget under $30.\n\nOR click \'Voice\' to speak your idea, or \'Image\' to upload a sketch!',
-                      className: 'w-full h-40 bg-black/30 border theme-border rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 resize-none transition-all mb-4',
-                      disabled: loading || analyzingImage
-                    }),
-                    idea.trim() && !analyzingImage && React.createElement('p', { className: 'text-xs text-gray-500 mb-2' }, '💾 Draft auto-saved'),
-                    
-                    React.createElement('button', {
-                      onClick: generateProject,
-                      disabled: loading || !idea.trim() || analyzingImage,
-                      onMouseEnter: (e) => showTooltip(e, 'Generate project (Ctrl+G)'),
-                      onMouseLeave: hideTooltip,
-                      className: 'w-full theme-bg hover:opacity-90 disabled:bg-gray-700 text-black font-bold py-4 px-8 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 disabled:cursor-not-allowed theme-glow'
-                    },
-                      loading ? 
-                        React.createElement(React.Fragment, {},
-                          React.createElement('i', { 'data-lucide': 'loader-2', style: { width: '24px', height: '24px' }, className: 'animate-spin' }),
-                          'Generating...'
-                        )
-                      :
-                        React.createElement(React.Fragment, {},
-                          React.createElement('i', { 'data-lucide': 'zap', style: { width: '24px', height: '24px' }}),
-                          'Generate Complete Project'
-                        )
-                    )
-                  ),
-
-                  loading && React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-2xl p-6 mb-8 border theme-border theme-glow-sm' },
-                    React.createElement('div', { className: 'flex items-center gap-3 mb-4' },
-                      React.createElement('i', { 'data-lucide': 'loader-2', style: { width: '24px', height: '24px' }, className: 'animate-spin theme-text' }),
-                      React.createElement('span', { className: 'text-lg font-medium theme-text' }, currentStep)
-                    ),
-                    React.createElement('div', { className: 'w-full bg-white/10 rounded-full h-2' },
-                      React.createElement('div', {
-                        className: 'theme-bg h-2 rounded-full animate-pulse transition-all duration-500',
-                        style: { width: '60%' }
-                      })
-                    )
-                  ),
-
-                  error && React.createElement('div', { className: 'bg-red-500/20 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-red-500/30 flex items-start gap-3 hover-lift' },
-                    React.createElement('i', { 'data-lucide': 'alert-circle', style: { width: '24px', height: '24px' }, className: 'text-red-400 flex-shrink-0' }),
-                    React.createElement('div', { className: 'flex-1' },
-                      React.createElement('h3', { className: 'font-semibold text-red-300 mb-2' }, 'Generation Error'),
-                      React.createElement('p', { className: 'text-red-200 mb-3' }, error),
-                      (error.includes('500') || error.includes('temporarily unavailable')) && React.createElement('div', { className: 'bg-red-900/30 rounded-lg p-3 mt-3' },
-                        React.createElement('p', { className: 'text-red-200 text-sm font-semibold mb-2' }, '⚠️ API Service Issue'),
-                        React.createElement('p', { className: 'text-red-300 text-sm' }, 'The AI service is experiencing high demand or temporary issues. Please:'),
-                        React.createElement('ul', { className: 'text-red-300 text-sm mt-2 space-y-1 list-disc list-inside' },
-                          React.createElement('li', {}, 'Wait 1-2 minutes and try again'),
-                          React.createElement('li', {}, 'Try using a simpler project description'),
-                          React.createElement('li', {}, 'Use "Max Speed" mode for faster processing'),
-                          React.createElement('li', {}, 'Check back later if the issue persists')
-                        )
-                      )
-                    )
-                  ),
-
-                  results && React.createElement('div', { className: 'space-y-6' },
-                    React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-2xl p-6 border theme-border flex items-center justify-between hover-lift theme-glow group' },
-                      React.createElement('div', { className: 'flex items-center gap-3' },
-                        React.createElement('i', { 'data-lucide': 'check-circle', style: { width: '32px', height: '32px' }, className: 'theme-text transition-transform group-hover:scale-110' }),
-                        React.createElement('div', {},
-                          React.createElement('h2', { className: 'text-2xl font-bold theme-text' }, results.plan.projectName),
-                          React.createElement('p', { className: 'text-gray-300 font-light' }, results.plan.description)
-                        )
-                      ),
-                      React.createElement('button', {
-                        onClick: downloadAllFiles,
-                        onMouseEnter: (e) => showTooltip(e, 'Download all files (Ctrl+S)'),
-                        onMouseLeave: hideTooltip,
-                        className: 'theme-bg hover:opacity-90 text-black font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all theme-glow-sm'
-                      },
-                        React.createElement('i', { 'data-lucide': 'download', style: { width: '20px', height: '20px' }}),
-                        'Download All'
-                      )
-                    ),
-
-                    React.createElement('div', { className: 'flex gap-2 overflow-x-auto' },
-                      tabs.map((tab) => 
-                        React.createElement('button', {
-                          key: tab.id,
-                          onClick: () => setActiveTab(tab.id),
-                          className: `flex items-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all whitespace-nowrap ${
-                            activeTab === tab.id ? 'tab-active' : 'tab-inactive hover:opacity-80'
-                          }`
-                        },
-                          React.createElement('i', { 'data-lucide': tab.icon.toLowerCase().replace(/([A-Z])/g, '-$1').toLowerCase(), style: { width: '20px', height: '20px' }}),
-                          tab.name
-                        )
-                      )
-                    ),
-
-                    React.createElement('div', { className: 'bg-black/40 backdrop-blur-lg rounded-2xl p-8 border theme-border min-h-[400px]' },
-                      activeTab === 'plan' && React.createElement('div', { className: 'space-y-6' },
-                        React.createElement('h2', { className: 'text-3xl font-bold theme-text mb-6' }, 'Project Plan'),
-                        
-                        React.createElement('div', { className: 'grid gap-6' },
-                          React.createElement('div', { className: 'bg-black/30 rounded-xl p-5 border theme-border' },
-                            React.createElement('h3', { className: 'font-semibold theme-text text-lg mb-2' }, 'Selected Hardware'),
-                            React.createElement('p', { className: 'text-gray-100 font-medium text-xl mb-2' }, results.plan.hardware.platform),
-                            React.createElement('p', { className: 'text-gray-400 text-sm' }, results.plan.hardware.justification)
-                          ),
-                          
-                          React.createElement('div', { className: 'bg-black/30 rounded-xl p-5 border theme-border' },
-                            React.createElement('h3', { className: 'font-semibold theme-text text-lg mb-2' }, 'Programming Language'),
-                            React.createElement('p', { className: 'text-gray-100 font-medium text-xl mb-2' }, results.plan.language.primary),
-                            React.createElement('p', { className: 'text-gray-400 text-sm' }, results.plan.language.justification)
-                          ),
-                          
-                          React.createElement('div', { className: 'bg-black/30 rounded-xl p-5 border theme-border' },
-                            React.createElement('h3', { className: 'font-semibold theme-text text-lg mb-2' }, 'CAD Requirements'),
-                            React.createElement('p', { className: 'text-gray-300' }, results.plan.cadRequirements)
-                          ),
-                          
-                          React.createElement('div', { className: 'bg-black/30 rounded-xl p-5 border theme-border' },
-                            React.createElement('h3', { className: 'font-semibold theme-text text-lg mb-2' }, 'Electronics Components'),
-                            React.createElement('ul', { className: 'list-disc list-inside text-gray-300 space-y-1' },
-                              results.plan.electronicsComponents.map((comp, idx) =>
-                                React.createElement('li', { key: idx }, comp)
-                              )
-                            )
-                          ),
-                          
-                          React.createElement('div', { className: 'bg-black/30 rounded-xl p-5 border theme-border' },
-                            React.createElement('h3', { className: 'font-semibold theme-text text-lg mb-2' }, 'Functional Requirements'),
-                            React.createElement('p', { className: 'text-gray-300' }, results.plan.functionalRequirements)
-                          ),
-                          
-                          React.createElement('div', { className: 'bg-black/30 rounded-xl p-5 border theme-border' },
-                            React.createElement('h3', { className: 'font-semibold theme-text text-lg mb-2' }, 'Pin Requirements'),
-                            React.createElement('p', { className: 'text-gray-300' }, results.plan.pinRequirements)
-                          )
-                        )
-                      ),
-
-                      activeTab === 'cad' && React.createElement('div', { className: 'space-y-6' },
-                        React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3' },
-                          React.createElement('h2', { className: 'text-2xl sm:text-3xl font-bold theme-text' }, '3D CAD Model (OpenSCAD)'),
-                          React.createElement('div', { className: 'flex gap-2 flex-wrap' },
-                            React.createElement('button', {
-                              onClick: () => setShow3DPreview(!show3DPreview),
-                              className: 'flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm'
-                            },
-                              React.createElement('i', { 'data-lucide': 'eye', style: { width: '18px', height: '18px' }}),
-                              show3DPreview ? 'Hide' : 'Preview'
-                            ),
-                            React.createElement('button', {
-                              onClick: () => copyToClipboard(results.openscadCode, 'cad'),
-                              className: 'flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm'
-                            },
-                              copiedSection === 'cad' ?
-                                React.createElement(React.Fragment, {},
-                                  React.createElement('i', { 'data-lucide': 'check', style: { width: '18px', height: '18px' }, className: 'theme-text' }),
-                                  'Copied!'
-                                )
-                              :
-                                React.createElement(React.Fragment, {},
-                                  React.createElement('i', { 'data-lucide': 'copy', style: { width: '18px', height: '18px' }}),
-                                  'Copy'
-                                )
-                            ),
-                            React.createElement('button', {
-                              onClick: () => downloadFile(results.openscadCode, `${results.plan.projectName.replace(/\s+/g, '_')}.scad`),
-                              className: 'theme-bg hover:opacity-90 text-black font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center gap-2 transition-all text-sm'
-                            },
-                              React.createElement('i', { 'data-lucide': 'download', style: { width: '18px', height: '18px' }}),
-                              React.createElement('span', { className: 'hidden sm:inline' }, 'Download .scad'),
-                              React.createElement('span', { className: 'sm:hidden' }, 'Download')
-                            )
-                          )
-                        ),
-                        
-                        show3DPreview && React.createElement('div', { className: 'bg-black/50 p-6 rounded-xl border theme-border' },
-                          React.createElement('div', { className: 'aspect-video bg-gradient-to-br from-gray-900 to-black rounded-lg flex items-center justify-center border-2 border-dashed border-gray-700' },
-                            React.createElement('div', { className: 'text-center' },
-                              React.createElement('i', { 'data-lucide': 'box', style: { width: '64px', height: '64px' }, className: 'mx-auto mb-4 theme-text opacity-50' }),
-                              React.createElement('p', { className: 'text-gray-400 text-lg mb-2' }, '3D Preview Coming Soon'),
-                              React.createElement('p', { className: 'text-gray-500 text-sm' }, 'Download the .scad file and open in OpenSCAD'),
-                              React.createElement('a', {
-                                href: 'https://openscad.org/downloads.html',
-                                target: '_blank',
-                                rel: 'noopener noreferrer',
-                                className: 'inline-block mt-4 theme-text hover:underline text-sm'
-                              }, 'Download OpenSCAD →')
-                            )
-                          )
-                        ),
-                        
-                        React.createElement('pre', { className: 'bg-black/50 p-4 sm:p-6 rounded-xl overflow-x-auto text-xs sm:text-sm border theme-border max-h-[400px] sm:max-h-[600px]' },
-                          React.createElement('code', { className: 'text-gray-300' }, results.openscadCode)
-                        )
-                      ),
-
-                      activeTab === 'pcb' && React.createElement('div', { className: 'space-y-6' },
-                        React.createElement('div', { className: 'flex items-center justify-between' },
-                          React.createElement('h2', { className: 'text-3xl font-bold theme-text' }, 'PCB Layout Preview'),
-                          React.createElement('button', {
-                            onClick: () => setShowPCBPreview(!showPCBPreview),
-                            className: 'theme-bg hover:opacity-90 text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all'
-                          },
-                            React.createElement('i', { 'data-lucide': 'cpu', style: { width: '20px', height: '20px' }}),
-                            showPCBPreview ? 'Hide' : 'Show', ' Layout'
-                          )
-                        ),
-                        
-                        showPCBPreview && React.createElement('div', { className: 'bg-black/50 p-6 rounded-xl border theme-border' },
-                          React.createElement('div', {
-                            className: 'bg-white rounded-lg p-4',
-                            dangerouslySetInnerHTML: { __html: generatePCBLayout() }
-                          }),
-                          React.createElement('div', { className: 'mt-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4' },
-                            React.createElement('h4', { className: 'font-bold text-blue-400 mb-2' }, 'PCB Layout Information'),
-                            React.createElement('ul', { className: 'text-sm text-gray-300 space-y-1' },
-                              React.createElement('li', {}, '• ', React.createElement('strong', {}, 'Board Size:'), ' Optimized for ', results.plan.hardware.platform),
-                              React.createElement('li', {}, '• ', React.createElement('strong', {}, 'Layers:'), ' 2-layer design (Top + Bottom)'),
-                              React.createElement('li', {}, '• ', React.createElement('strong', {}, 'Main IC:'), ' ', results.plan.hardware.platform, ' at center'),
-                              React.createElement('li', {}, '• ', React.createElement('strong', {}, 'Components:'), ' ', results.bom.components.length, ' total components'),
-                              React.createElement('li', {}, '• ', React.createElement('strong', {}, 'Power Rails:'), ' +VCC (Red) and GND (Blue)'),
-                              React.createElement('li', {}, '• ', React.createElement('strong', {}, 'Mounting:'), ' 4 corner mounting holes')
-                            )
-                          ),
-                          React.createElement('div', { className: 'mt-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4' },
-                            React.createElement('p', { className: 'text-yellow-400 text-sm' },
-                              '⚠️ ',
-                              React.createElement('strong', {}, 'Note:'),
-                              ' This is a conceptual layout. For production PCBs, use professional tools like KiCAD, Eagle, or Altium Designer.'
-                            )
-                          )
-                        ),
-                        
-                        React.createElement('div', { className: 'bg-black/50 p-6 rounded-xl border theme-border' },
-                          React.createElement('h3', { className: 'text-xl font-bold theme-text mb-4' }, 'PCB Design Recommendations'),
-                          React.createElement('div', { className: 'space-y-3 text-gray-300' },
-                            React.createElement('p', {},
-                              React.createElement('strong', { className: 'theme-text' }, 'Trace Width:'),
-                              ' Use 0.25mm for signals, 0.5mm+ for power'
-                            ),
-                            React.createElement('p', {},
-                              React.createElement('strong', { className: 'theme-text' }, 'Clearance:'),
-                              ' Maintain 0.2mm minimum between traces'
-                            ),
-                            React.createElement('p', {},
-                              React.createElement('strong', { className: 'theme-text' }, 'Via Size:'),
-                              ' 0.8mm drill, 1.2mm pad diameter'
-                            ),
-                            React.createElement('p', {},
-                              React.createElement('strong', { className: 'theme-text' }, 'Ground Plane:'),
-                              ' Use copper pour on bottom layer for GND'
-                            ),
-                            React.createElement('p', {},
-                              React.createElement('strong', { className: 'theme-text' }, 'Decoupling:'),
-                              ' Place 0.1µF caps near ', results.plan.hardware.platform, ' power pins'
-                            )
-                          )
-                        )
-                      ),
-
-                      activeTab === 'bom' && React.createElement('div', { className: 'space-y-6' },
-                        React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3' },
-                          React.createElement('h2', { className: 'text-2xl sm:text-3xl font-bold theme-text' }, 'Bill of Materials'),
-                          React.createElement('div', { className: 'flex gap-2 flex-wrap' },
-                            React.createElement('button', {
-                              onClick: () => setShowCircuitDiagram(!showCircuitDiagram),
-                              className: 'flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm'
-                            },
-                              React.createElement('i', { 'data-lucide': 'zap', style: { width: '18px', height: '18px' }}),
-                              showCircuitDiagram ? 'Hide' : 'Circuit'
-                            ),
-                            React.createElement('button', {
-                              onClick: () => copyToClipboard(JSON.stringify(results.bom, null, 2), 'bom'),
-                              className: 'flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-all border theme-border text-sm'
-                            },
-                              copiedSection === 'bom' ?
-                                React.createElement(React.Fragment, {},
-                                  React.createElement('i', { 'data-lucide': 'check', style: { width: '18px', height: '18px' }, className: 'theme-text' }),
-                                  'Copied!'
-                                )
-                              :
-                                React.createElement(React.Fragment, {},
-                                  React.createElement('i', { 'data-lucide': 'copy', style: { width: '18px', height: '18px' }}),
-                                  'Copy'
-                                )
-                            ),
-                            React.createElement('button', {
-                              onClick: () => downloadFile(JSON.stringify(results.bom, null, 2), `${results.plan.projectName.replace(/\s+/g, '_')}_BOM.json`),
-                              className: 'theme-bg hover:opacity-90 text-black font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center gap-2 transition-all text-sm'
-                            },
-                              React.createElement('i', { 'data-lucide': 'download', style: { width: '18px', height: '18px' }}),
-                              React.createElement('span', { className: 'hidden sm:inline' }, 'Download .json'),
-                              React.createElement('span', { className: 'sm:hidden' }, 'Download')
-                            )
-                          )
-                        ),
-                        
-                        showCircuitDiagram && React.createElement('div', { className: 'bg-black/50 p-4 sm:p-6 rounded-xl border theme-border' },
-                          React.createElement('h3', { className: 'text-lg sm:text-xl font-bold theme-text mb-4' }, 'Visual Circuit Diagram'),
-                          React.createElement('div', { className: 'bg-white rounded-lg p-4 overflow-auto' },
-                            React.createElement('pre', { className: 'mermaid text-xs sm:text-sm' },
-                              generateCircuitDiagram(results.bom)
-                            )
-                          ),
-                          React.createElement('p', { className: 'text-gray-400 text-xs sm:text-sm mt-3' },
-                            '💡 Tip: This diagram shows component connections. Refer to the wiring diagram below for detailed pin mappings.'
-                          )
-                        ),
-                        
-                        React.createElement('div', { className: 'bg-black/50 p-4 sm:p-6 rounded-xl border theme-border' },
-                          React.createElement('p', { className: 'font-bold theme-text text-xl sm:text-2xl' },
-                            'Total Estimated Cost: ', results.bom.totalEstimatedCost
-                          )
-                        ),
-
-                        React.createElement('div', { className: 'space-y-4' },
-                          results.bom.components.map((comp, idx) =>
-                            React.createElement('div', {
-                              key: idx,
-                              className: 'bg-black/50 p-4 sm:p-5 rounded-xl border theme-border hover-lift cursor-pointer group'
-                            },
-                              React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0 mb-3' },
-                                React.createElement('h4', { className: 'font-semibold text-lg sm:text-xl theme-text group-hover:text-white transition-colors' }, comp.name),
-                                React.createElement('span', { className: 'theme-text font-mono font-bold text-base sm:text-lg' }, comp.estimatedCost)
-                              ),
-                              React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors' },
-                                React.createElement('p', {},
-                                  React.createElement('span', { className: 'theme-text font-semibold' }, 'Quantity:'),
-                                  ' ', comp.quantity
-                                ),
-                                React.createElement('p', {},
-                                  React.createElement('span', { className: 'theme-text font-semibold' }, 'Supplier:'),
-                                  ' ', comp.supplier
-                                ),
-                                React.createElement('p', { className: 'col-span-1 sm:col-span-2' },
-                                  React.createElement('span', { className: 'theme-text font-semibold' }, 'Part #:'),
-                                  ' ', comp.partNumber
-                                ),
-                                comp.pinConnection && React.createElement('p', { className: 'col-span-1 sm:col-span-2' },
-                                  React.createElement('span', { className: 'theme-text font-semibold' }, 'Pin:'),
-                                  ' ', comp.pinConnection
-                                ),
-                                React.createElement('p', { className: 'col-span-1 sm:col-span-2' },
-                                  React.createElement('span', { className: 'theme-text font-semibold' }, 'Purpose:'),
-                                  ' ', comp.purpose
-                                )
-                              )
-                            )
-                          )
-                        ),
-
-                        React.createElement('div', { className: 'bg-black/50 p-4 sm:p-6 rounded-xl border theme-border' },
-                          React.createElement('h4', { className: 'font-bold mb-3 theme-text text-lg sm:text-xl' }, 'Wiring Diagram'),
-                          React.createElement('p', { className: 'text-gray-300 whitespace-pre-wrap font-light text-sm sm:text-base' }, results.bom.connectionDiagram)
-                        )
-                      ),
-
-                      activeTab === 'code' && React.createElement('div', { className: 'space-y-6' },
-                        React.createElement('div', { className: 'flex items-center justify-between' },
-                          React.createElement('div', {},
-                            React.createElement('h2', { className: 'text-3xl font-bold theme-text' }, results.plan.hardware.platform, ' Control Code'),
-                            React.createElement('p', { className: 'text-gray-400 mt-1' }, 'Language: ', results.plan.language.primary)
-                          ),
-                          React.createElement('div', { className: 'flex gap-2' },
-                            React.createElement('button', {
-                              onClick: () => {
-                                setShowCodeEditor(!showCodeEditor);
-                                if (!showCodeEditor) {
-                                  setEditedCode(results.controlCode);
-                                }
-                              },
-                              className: 'flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border'
-                            },
-                              React.createElement('i', { 'data-lucide': 'code', style: { width: '20px', height: '20px' }}),
-                              showCodeEditor ? 'View Only' : 'Edit Code'
-                            ),
-                            React.createElement('button', {
-                              onClick: () => copyToClipboard(showCodeEditor ? editedCode : results.controlCode, 'code'),
-                              className: 'flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border'
-                            },
-                              copiedSection === 'code' ?
-                                React.createElement(React.Fragment, {},
-                                  React.createElement('i', { 'data-lucide': 'check', style: { width: '20px', height: '20px' }, className: 'theme-text' }),
-                                  'Copied!'
-                                )
-                              :
-                                React.createElement(React.Fragment, {},
-                                  React.createElement('i', { 'data-lucide': 'copy', style: { width: '20px', height
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(NeuroFab));
+        });
+    </script>
+</body>
+</html>
