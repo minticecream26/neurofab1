@@ -1,613 +1,903 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NeuroFab - AI-Powered Engineering Design Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroFab - Cleaned</title>
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
-    :root {
-      --theme-primary: #7FFFD4;
-      --theme-secondary: #5FE6B4;
-      --theme-accent: #9FFFD4;
-      --theme-glow: rgba(127, 255, 212, 0.3);
-      --theme-text: #7FFFD4;
-      --theme-bg-gradient: linear-gradient(to bottom right, black, #064e3b, black);
-    }
+    /* (styles left unchanged from original for visual parity) */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Comfortaa', cursive; margin: 0; padding: 0; overflow-x: hidden; }
+    .app-container { min-height: 100vh; padding: 2rem; transition: all 0.5s ease; color: white; }
+    .theme-mint { background: linear-gradient(to bottom right, black, #064e3b, black); --theme-primary: #7FFFD4; --theme-secondary: #5FE6B4; --theme-accent: #9FFFD4; --theme-glow: rgba(127, 255, 212, 0.3); --theme-text: #7FFFD4; }
+    .theme-ocean { background: linear-gradient(to bottom right, black, #1e3a8a, black); --theme-primary: #4A90E2; --theme-secondary: #357ABD; --theme-accent: #5DADE2; --theme-glow: rgba(74, 144, 226, 0.3); --theme-text: #4A90E2; }
+    .theme-purple { background: linear-gradient(to bottom right, black, #581c87, black); --theme-primary: #9B59B6; --theme-secondary: #7D3C98; --theme-accent: #BB8FCE; --theme-glow: rgba(155, 89, 182, 0.3); --theme-text: #9B59B6; }
+    .theme-orange { background: linear-gradient(to bottom right, black, #7c2d12, black); --theme-primary: #FF8C42; --theme-secondary: #E67E22; --theme-accent: #FFAA6F; --theme-glow: rgba(255, 140, 66, 0.3); --theme-text: #FF8C42; }
+    .theme-glow { box-shadow: 0 0 20px var(--theme-glow); }
+    .theme-glow-sm { box-shadow: 0 0 10px var(--theme-glow); }
+    .hover-lift { transition: all 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 8px 30px var(--theme-glow); }
+    .theme-border { border-color: var(--theme-primary); }
+    .theme-text { color: var(--theme-text); }
+    .theme-bg { background-color: var(--theme-primary); }
+    .tab-active { background-color: var(--theme-primary); color: #000; }
+    .tab-inactive { background-color: rgba(255, 255, 255, 0.1); color: var(--theme-text); }
+    ::-webkit-scrollbar { width: 12px; height: 12px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--theme-primary); border-radius: 10px; border: 2px solid rgba(0, 0, 0, 0.3); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--theme-secondary); box-shadow: 0 0 10px var(--theme-glow); }
+    .max-w-6xl { max-width: 72rem; margin: 0 auto; }
+    .btn { border: none; cursor: pointer; font-family: 'Comfortaa', cursive; transition: all 0.3s ease; outline: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background-color: var(--theme-primary); color: black; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .gap-6 { gap: 1.5rem; }
+    .p-2 { padding: 0.5rem; } .p-3 { padding: 0.75rem; } .p-4 { padding: 1rem; }
+    .p-5 { padding: 1.25rem; } .p-6 { padding: 1.5rem; } .p-8 { padding: 2rem; } .p-12 { padding: 3rem; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+    .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; } .mb-4 { margin-bottom: 1rem; }
+    .mb-6 { margin-bottom: 1.5rem; } .mb-8 { margin-bottom: 2rem; }
+    .mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; }
+    .mt-3 { margin-top: 0.75rem; } .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; } .ml-7 { margin-left: 1.75rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .text-xs { font-size: 0.75rem; } .text-sm { font-size: 0.875rem; }
+    .text-base { font-size: 1rem; } .text-lg { font-size: 1.125rem; }
+    .text-xl { font-size: 1.25rem; } .text-2xl { font-size: 1.5rem; }
+    .text-3xl { font-size: 1.875rem; } .text-6xl { font-size: 3.75rem; }
+    .font-light { font-weight: 300; } .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; } .font-bold { font-weight: 700; }
+    .text-white { color: white; } .text-black { color: black; }
+    .text-gray-300 { color: #d1d5db; } .text-gray-400 { color: #9ca3af; }
+    .text-gray-500 { color: #6b7280; } .text-red-200 { color: #fecaca; }
+    .text-red-300 { color: #fca5a5; } .text-red-400 { color: #f87171; }
+    .text-yellow-400 { color: #facc15; } .text-blue-300 { color: #93c5fd; }
+    .text-blue-400 { color: #60a5fa; } .text-green-400 { color: #4ade80; }
+    .bg-black { background-color: black; } .bg-transparent { background-color: transparent; }
+    .rounded-lg { border-radius: 0.5rem; } .rounded-xl { border-radius: 0.75rem; }
+    .rounded-2xl { border-radius: 1rem; } .rounded-full { border-radius: 9999px; }
+    .border { border-width: 1px; border-style: solid; }
+    .w-full { width: 100%; } .h-full { height: 100%; } .flex-1 { flex: 1; }
+    .overflow-auto { overflow: auto; } .overflow-x-auto { overflow-x: auto; }
+    .overflow-y-auto { overflow-y: auto; }
+    .text-center { text-align: center; } .text-left { text-align: left; }
+    .whitespace-pre-wrap { white-space: pre-wrap; } .whitespace-nowrap { white-space: nowrap; }
+    .opacity-50 { opacity: 0.5; } .cursor-pointer { cursor: pointer; }
+    .transition-all { transition: all 0.3s ease; }
+    .absolute { position: absolute; } .relative { position: relative; } .fixed { position: fixed; }
+    .top-6 { top: 1.5rem; } .left-6 { left: 1.5rem; } .right-6 { right: 1.5rem; }
+    .bottom-6 { bottom: 1.5rem; } .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .z-10 { z-index: 10; } .z-50 { z-index: 50; } .z-100 { z-index: 100; }
+    .backdrop-blur-lg { backdrop-filter: blur(16px); }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
+    .grid { display: grid; } .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hidden { display: none !important; } .block { display: block; }
+    .animate-spin { animation: spin 1s linear infinite; }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .icon { display: inline-block; width: 20px; height: 20px; stroke-width: 2; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+    .icon-lg { width: 24px; height: 24px; }
+    input, textarea, select { font-family: 'Comfortaa', cursive; }
+    .card { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(16px); border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.2); }
+    pre { overflow-x: auto; font-family: monospace; background: rgba(0, 0, 0, 0.5); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--theme-primary); max-height: 600px; overflow-y: auto; }
+    code { font-family: monospace; color: #d1d5db; }
+    textarea { background: rgba(0, 0, 0, 0.3); border: 1px solid var(--theme-primary); border-radius: 0.75rem; padding: 1rem; color: white; resize: none; }
+    textarea::placeholder { color: #6b7280; }
+    input[type="text"] { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--theme-primary); border-radius: 0.5rem; padding: 0.5rem 1rem; color: white; }
+    select { background-color: black; color: var(--theme-text); font-weight: 600; padding: 0.5rem; border-radius: 0.25rem; border: none; cursor: pointer; }
+    .hover\:opacity-90:hover { opacity: 0.9; }
+    .hover\:bg-white\/10:hover { background-color: rgba(255, 255, 255, 0.1); }
+    .bg-black\/40 { background-color: rgba(0, 0, 0, 0.4); }
+    .bg-black\/50 { background-color: rgba(0, 0, 0, 0.5); }
+    .bg-red-500\/20 { background-color: rgba(239, 68, 68, 0.2); }
+    .border-white\/20 { border-color: rgba(255, 255, 255, 0.2); }
+    .border-red-500\/30 { border-color: rgba(239, 68, 68, 0.3); }
+    @media (max-width: 768px) { .app-container { padding: 1rem; } .text-6xl { font-size: 2.5rem; } }
+    /* Fix History button font */
+  #togglePageBtn span, #historyBackBtn span {
+    font-family: 'Comfortaa', cursive !important;
+  }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  /* Dropdown theme colors */
+  select#themeSelect option[value="mint"] {
+    background-color: black;
+    color: #7FFFD4;
+  }
+  select#themeSelect option[value="ocean"] {
+    background-color: black;
+    color: #4A90E2;
+  }
+  select#themeSelect option[value="purple"] {
+    background-color: black;
+    color: #BB8FCE;
+  }
+  select#themeSelect option[value="orange"] {
+    background-color: black;
+    color: #FF8C42;
+  }
 
-    body {
-      font-family: 'Comfortaa', cursive;
-      min-height: 100vh;
-      background: var(--theme-bg-gradient);
-      color: white;
-      padding: 2rem;
-      transition: all 0.5s;
-    }
-
-    .container {
-      max-width: 72rem;
-      margin: 0 auto;
-    }
-
-    .theme-glow {
-      box-shadow: 0 0 20px var(--theme-glow);
-    }
-
-    .theme-glow-sm {
-      box-shadow: 0 0 10px var(--theme-glow);
-    }
-
-    .hover-lift {
-      transition: all 0.3s ease;
-    }
-
-    .hover-lift:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px var(--theme-glow);
-    }
-
-    .theme-border {
-      border-color: var(--theme-primary);
-    }
-
-    .theme-text {
-      color: var(--theme-text);
-    }
-
-    .theme-bg {
-      background-color: var(--theme-primary);
-    }
-
-    .tab-active {
-      background-color: var(--theme-primary);
-      color: #000;
-    }
-
-    .tab-inactive {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: var(--theme-text);
-    }
-
-    ::-webkit-scrollbar {
-      width: 12px;
-      height: 12px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--theme-primary);
-      border-radius: 10px;
-      border: 2px solid rgba(0, 0, 0, 0.3);
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--theme-secondary);
-      box-shadow: 0 0 10px var(--theme-glow);
-    }
-
-    .btn {
-      border: none;
-      cursor: pointer;
-      font-family: 'Comfortaa', cursive;
-      transition: all 0.3s ease;
-      outline: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background-color: var(--theme-primary);
-      color: black;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      opacity: 0.9;
-    }
-
-    .card {
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(16px);
-      border-radius: 1rem;
-      padding: 2rem;
-      border: 1px solid var(--theme-primary);
-      margin-bottom: 2rem;
-    }
-
-    .input-area {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--theme-primary);
-      border-radius: 0.75rem;
-      padding: 1rem;
-      color: white;
-      font-family: 'Comfortaa', cursive;
-      resize: none;
-      font-size: 0.875rem;
-    }
-
-    .input-area:focus {
-      outline: 2px solid var(--theme-primary);
-      outline-offset: 2px;
-    }
-
-    .input-area::placeholder {
-      color: #6b7280;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 0.5rem;
-      overflow-x: auto;
-      margin-bottom: 1.5rem;
-    }
-
-    .tab {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      font-weight: 600;
-      border-radius: 0.5rem;
-      transition: all 0.3s;
-      white-space: nowrap;
-      cursor: pointer;
-      border: none;
-      font-family: 'Comfortaa', cursive;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .icon {
-      width: 20px;
-      height: 20px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .top-nav {
-      position: absolute;
-      top: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(16px);
-      border-radius: 0.5rem;
-      padding: 0.75rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      cursor: pointer;
-      transition: opacity 0.3s;
-      z-index: 10;
-      color: var(--theme-primary);
-      font-weight: 600;
-    }
-
-    .top-nav:hover {
-      opacity: 0.8;
-    }
-
-    .top-nav-left {
-      left: 1.5rem;
-    }
-
-    .top-nav-right {
-      right: 1.5rem;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    select {
-      background-color: black;
-      color: var(--theme-primary);
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 0.25rem;
-      border: none;
-      font-family: 'Comfortaa', cursive;
-    }
-
-    option {
-      background-color: black;
-    }
-
-    pre {
-      background: rgba(0, 0, 0, 0.5);
-      padding: 1.5rem;
-      border-radius: 0.75rem;
-      overflow-x: auto;
-      font-size: 0.875rem;
-      border: 1px solid var(--theme-primary);
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
-    code {
-      color: #d1d5db;
-      font-family: monospace;
-    }
-
-    .loading-bar {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 9999px;
-      height: 0.5rem;
-      overflow: hidden;
-      margin-top: 1rem;
-    }
-
-    .loading-bar-fill {
-      background-color: var(--theme-primary);
-      height: 100%;
-      width: 60%;
-      animation: pulse 1.5s infinite;
-      transition: all 0.5s;
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.5;
-      }
-    }
-
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .animate-spin {
-      animation: spin 1s linear infinite;
-    }
-
-    .animate-pulse {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-
-    .history-item {
-      background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(16px);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      border: 1px solid var(--theme-primary);
-      cursor: pointer;
-      margin-bottom: 1rem;
-    }
-
-    .history-item:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px var(--theme-glow);
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-      padding: 1rem;
-    }
-
-    .modal {
-      background: rgba(0, 0, 0, 0.95);
-      backdrop-filter: blur(24px);
-      border-radius: 1rem;
-      border: 1px solid var(--theme-primary);
-      box-shadow: 0 0 20px var(--theme-glow);
-      max-width: 32rem;
-      width: 100%;
-      padding: 1.5rem;
-    }
-
-    .chat-fab {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      background-color: var(--theme-primary);
-      color: black;
-      font-weight: bold;
-      padding: 1rem;
-      border-radius: 9999px;
-      box-shadow: 0 0 20px var(--theme-glow);
-      transition: all 0.3s;
-      z-index: 50;
-      cursor: pointer;
-      border: none;
-    }
-
-    .chat-fab:hover {
-      opacity: 0.9;
-      transform: scale(1.1);
-    }
-
-    .chat-container {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      width: 24rem;
-      max-width: calc(100vw - 3rem);
-      background: rgba(0, 0, 0, 0.95);
-      backdrop-filter: blur(24px);
-      border-radius: 1rem;
-      border: 1px solid var(--theme-primary);
-      box-shadow: 0 0 20px var(--theme-glow);
-      z-index: 50;
-      display: flex;
-      flex-direction: column;
-      height: 600px;
-    }
-
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      min-height: 0;
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      right: 0;
-      margin-top: 0.5rem;
-      background: rgba(0, 0, 0, 0.9);
-      backdrop-filter: blur(16px);
-      border-radius: 0.5rem;
-      border: 1px solid var(--theme-primary);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      z-index: 50;
-      min-width: 200px;
-    }
-
-    .dropdown-item {
-      width: 100%;
-      text-align: left;
-      padding: 0.75rem 1rem;
-      transition: background-color 0.2s;
-      color: var(--theme-primary);
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      font-family: 'Comfortaa', cursive;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .dropdown-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    input[type="text"] {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--theme-primary);
-      border-radius: 0.5rem;
-      padding: 0.5rem 1rem;
-      color: white;
-      font-family: 'Comfortaa', cursive;
-      outline: none;
-      width: 100%;
-    }
-
-    input[type="text"]::placeholder {
-      color: #6b7280;
-    }
-
-    @media (max-width: 768px) {
-      .title {
-        font-size: 2.5rem;
-      }
-    }
-  </style>
+</style>
 </head>
 <body>
-  <div class="container">
-    <!-- Top Navigation -->
-    <div class="top-nav top-nav-left" id="historyBtn">
-      <svg class="icon" viewBox="0 0 24 24">
-        <path d="M3 3v5h5"></path>
-        <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
-        <path d="M12 7v5l4 2"></path>
-      </svg>
-      <span id="historyBtnText">History</span>
-    </div>
+  <div id="app"></div>
 
-    <div class="top-nav top-nav-right">
-      <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(16px); border-radius: 0.5rem; padding: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.2);">
-        <svg class="icon" viewBox="0 0 24 24">
-          <circle cx="13.5" cy="6.5" r=".5"></circle>
-          <circle cx="17.5" cy="10.5" r=".5"></circle>
-          <circle cx="8.5" cy="7.5" r=".5"></circle>
-          <circle cx="6.5" cy="12.5" r=".5"></circle>
-          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
-        </svg>
-        <select id="themeSelect">
-          <option value="mint">Glacial Mint</option>
-          <option value="ocean">Ocean Blue</option>
-          <option value="purple">Royal Purple</option>
-          <option value="orange">Sunset Orange</option>
-        </select>
-      </div>
+  <script>
+  (function () {
+    // ---- State (kept as close to original as possible) ----
+    const state = {
+      idea: '',
+      loading: false,
+      currentStep: '',
+      results: null,
+      error: null,
+      theme: 'mint',
+      activeTab: 'plan',
+      page: 'main',
+      history: [],
+      generationMode: 'moderate',
+      skipCAD: true,
+      favorites: [],
+      searchQuery: ''
+    };
 
-      <div style="background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(16px); border-radius: 0.5rem; padding: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2);">
-        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-          <svg class="icon" viewBox="0 0 24 24">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-          <select id="modeSelect">
-            <option value="max_speed">⚡ Max Speed</option>
-            <option value="moderate" selected>⚙️ Moderate</option>
-            <option value="max_detail">🔬 Max Detail</option>
-          </select>
-        </div>
-        <div id="modeDescription" style="font-size: 0.75rem; color: #9ca3af; margin-left: 1.75rem; margin-bottom: 0.5rem;">
-          <div style="margin-bottom: 0.25rem;">~45-60s • Claude Sonnet</div>
-          <div>1200-1500 tokens • Balanced</div>
-        </div>
-        <label id="skipCADContainer" class="hidden" style="display: flex; align-items: center; gap: 0.5rem; margin-left: 1.75rem; cursor: pointer;">
-          <input type="checkbox" id="skipCAD" checked style="width: 1rem; height: 1rem; cursor: pointer;">
-          <span style="font-size: 0.75rem; color: #d1d5db;">Skip CAD generation</span>
-        </label>
-      </div>
-    </div>
+    // ---- Icons (unchanged, kept as SVG strings) ----
+    const icons = {
+      Zap: '<svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+      History: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 3v5h5"></path><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path><path d="M12 7v5l4 2"></path></svg>',
+      Palette: '<svg class="icon" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>',
+      Loader2: '<svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>',
+      Download: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+      AlertCircle: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+      CheckCircle: '<svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+      FileText: '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
+      Box: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>',
+      Code: '<svg class="icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
+      Cpu: '<svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>',
+      Search: '<svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>'
+    };
 
-    <!-- Header -->
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
-        <svg width="90" height="90" viewBox="0 0 400 400" fill="var(--theme-primary)" stroke="var(--theme-primary)" stroke-width="8">
-          <rect x="30" y="30" width="340" height="340" rx="50" ry="50" fill="none" stroke="var(--theme-primary)" stroke-width="12"/>
-          <path d="M 80 200 Q 80 160 110 160 Q 110 120 150 120 Q 190 120 205 150 Q 205 190 205 220 Q 205 260 175 275 Q 145 275 115 260 Q 80 245 80 200 Z" fill="var(--theme-primary)" stroke="none"/>
-          <line x1="205" y1="155" x2="260" y2="155" stroke-width="10"/>
-          <path d="M 260 155 L 280 155 Q 300 155 300 135" fill="none" stroke-width="10"/>
-          <circle cx="300" cy="135" r="13"/>
-          <line x1="205" y1="200" x2="310" y2="200" stroke-width="10"/>
-          <circle cx="310" cy="200" r="13"/>
-          <line x1="205" y1="245" x2="260" y2="245" stroke-width="10"/>
-          <path d="M 260 245 L 280 245 Q 300 245 300 265" fill="none" stroke-width="10"/>
-          <circle cx="300" cy="265" r="13"/>
-        </svg>
-        <h1 style="font-size: 3.75rem; font-weight: bold; color: var(--theme-text); text-shadow: 0 0 30px var(--theme-glow);">NeuroFab</h1>
-      </div>
-      <p style="font-size: 1.25rem; color: #d1d5db; font-weight: 300;">AI-Powered Engineering Design Generator</p>
-      <p style="font-size: 0.875rem; color: #9ca3af; margin-top: 0.5rem;">Transform ideas into CAD models, electronics BOMs, and control code</p>
-    </div>
+    // ---- Helpers ----
+    function safeText(value) {
+      return (value === null || value === undefined) ? '' : String(value);
+    }
 
-    <!-- Main Page -->
-    <div id="mainPage">
-      <div class="card theme-glow-sm">
-        <p style="text-align: center; color: var(--theme-text); font-size: 0.875rem; font-weight: 500;">
-          💡 <strong>How to use:</strong> Describe your complete project idea → Click Generate (Ctrl+G) → Browse results → Export (Ctrl+E) or Download (Ctrl+S)
-        </p>
-      </div>
+    function escapeHtml(text) {
+      const s = safeText(text);
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
 
-      <div class="card hover-lift theme-glow-sm">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-          <label style="font-size: 1.125rem; font-weight: 600; color: var(--theme-text);">
-            Describe Your Complete Project Idea
-          </label>
-          <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn-primary" id="voiceBtn">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <line x1="12" y1="19" x2="12" y2="23"></line>
-                <line x1="8" y1="23" x2="16" y2="23"></line>
-              </svg>
-              Voice
-            </button>
-            <label class="btn" style="background-color: var(--theme-secondary); color: black;">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-              Image
-              <input type="file" id="imageInput" accept="image/*">
-            </label>
-            <button class="btn" id="clearDraftBtn" style="background: transparent; color: #9ca3af; padding: 0.5rem;" title="Clear text">
-              <svg class="icon" viewBox="0 0 24 24">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
+    function setState(partial) {
+      Object.assign(state, partial);
+      // Render after state change
+      render();
+    }
+
+    // ---- Storage helpers: use window.storage if available; otherwise localStorage fallback ----
+    const storageAPI = (function () {
+      const hasWindowStorage = typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+      return {
+        async list(prefix) {
+          if (hasWindowStorage) return window.storage.list(prefix);
+          const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
+          return { keys };
+        },
+        async get(key) {
+          if (hasWindowStorage) return window.storage.get(key);
+          return { value: localStorage.getItem(key) };
+        },
+        async set(key, value) {
+          if (hasWindowStorage) return window.storage.set(key, value);
+          localStorage.setItem(key, value);
+        },
+        async delete(key) {
+          if (hasWindowStorage) return window.storage.delete(key);
+          localStorage.removeItem(key);
+        }
+      };
+    })();
+
+    // ---- Rendering ----
+    function render() {
+      const app = document.getElementById('app');
+      if (!app) return;
+      app.className = `app-container theme-${state.theme}`;
+
+      if (state.page === 'history') {
+        renderHistoryPage(app);
+      } else {
+        renderMainPage(app);
+      }
+    }
+
+    function renderMainPage(container) {
+      // Safe values
+      const ideaEscaped = escapeHtml(state.idea || '');
+      const modeDescription = getModeDescription() || '';
+
+      container.innerHTML = `
+        <div class="max-w-6xl" style="position: relative;">
+          <!-- Top Navigation -->
+          <div class="fixed top-6 left-6 z-10">
+            <button id="togglePageBtn" class="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80 transition-all theme-text cursor-pointer">
+              ${icons.History}
+              <span class="font-semibold">${state.page === 'main' ? 'History' : 'Back'}</span>
             </button>
           </div>
-        </div>
 
-        <div id="uploadedImagePreview" class="hidden" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--theme-primary); background: rgba(127, 255, 212, 0.1); display: flex; align-items: start; gap: 0.75rem;">
-          <svg class="icon" style="flex-shrink: 0; margin-top: 0.25rem;" viewBox="0 0 24 24">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-          <div style="flex: 1;">
-            <p style="color: var(--theme-text); font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Uploaded Image</p>
-            <img id="uploadedImage" style="max-height: 8rem; border-radius: 0.25rem; border: 1px solid var(--theme-primary);">
+          <div class="fixed top-6 right-6 z-10 flex flex-col gap-3">
+            <div class="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-2 border border-white/20">
+              ${icons.Palette}
+              <select id="themeSelect" class="bg-black theme-text font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1">
+                <option value="mint" ${state.theme === 'mint' ? 'selected' : ''}>Glacial Mint</option>
+                <option value="ocean" ${state.theme === 'ocean' ? 'selected' : ''}>Ocean Blue</option>
+                <option value="purple" ${state.theme === 'purple' ? 'selected' : ''}>Royal Purple</option>
+                <option value="orange" ${state.theme === 'orange' ? 'selected' : ''}>Sunset Orange</option>
+              </select>
+            </div>
+
+            <div class="bg-black/40 backdrop-blur-lg rounded-lg p-2 border border-white/20 flex items-start gap-2 flex-col">
+              <div class="flex items-center gap-2 mb-2">
+                ${icons.Zap}
+                <select id="modeSelect" class="bg-black theme-text font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1" ${state.loading ? 'disabled' : ''}>
+                  <option value="max_speed" ${state.generationMode === 'max_speed' ? 'selected' : ''}>⚡ Max Speed</option>
+                  <option value="moderate" ${state.generationMode === 'moderate' ? 'selected' : ''}>⚙️ Moderate</option>
+                  <option value="max_detail" ${state.generationMode === 'max_detail' ? 'selected' : ''}>🔬 Max Detail</option>
+                </select>
+              </div>
+              <div class="text-xs text-gray-400 ml-7 mb-2" id="modeDescription">${modeDescription}</div>
+
+              ${state.generationMode === 'max_speed' ? `
+                <label class="flex items-center gap-2 ml-7 cursor-pointer group">
+                  <input type="checkbox" id="skipCAD" ${state.skipCAD ? 'checked' : ''} ${state.loading ? 'disabled' : ''} />
+                  <span class="text-xs text-gray-300">Skip CAD generation</span>
+                </label>
+              ` : ''}
+            </div>
           </div>
-          <button id="removeImageBtn" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 0.25rem;">
-            <svg class="icon" viewBox="0 0 24 24">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+
+          <!-- Header -->
+          <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-4 mb-6">
+              <svg width="90" height="90" viewBox="0 0 400 400" style="fill: var(--theme-primary); stroke: var(--theme-primary);">
+                <rect x="30" y="30" width="340" height="340" rx="50" ry="50" fill="none" stroke-width="12"/>
+                <path d="M 80 200 Q 80 160 110 160 Q 110 120 150 120 Q 190 120 205 150 Q 205 190 205 220 Q 205 260 175 275 Q 145 275 115 260 Q 80 245 80 200 Z" stroke="none"/>
+                <line x1="205" y1="155" x2="260" y2="155" stroke-width="10"/>
+                <path d="M 260 155 L 280 155 Q 300 155 300 135" fill="none" stroke-width="10"/>
+                <circle cx="300" cy="135" r="13"/>
+                <line x1="205" y1="200" x2="310" y2="200" stroke-width="10"/>
+                <circle cx="310" cy="200" r="13"/>
+                <line x1="205" y1="245" x2="260" y2="245" stroke-width="10"/>
+                <path d="M 260 245 L 280 245 Q 300 245 300 265" fill="none" stroke-width="10"/>
+                <circle cx="300" cy="265" r="13"/>
+              </svg>
+              <h1 class="text-6xl font-bold theme-text">NeuroFab</h1>
+            </div>
+            <p class="text-xl text-gray-300 font-light">AI-Powered Engineering Design Generator</p>
+            <p class="text-sm text-gray-400 mt-2">Transform ideas into CAD models, electronics BOMs, and control code</p>
+          </div>
+
+          <!-- Instructions Card -->
+          <div class="card p-4 theme-glow-sm mb-8">
+            <p class="text-center theme-text text-sm font-medium">💡 <strong>How to use:</strong> Describe your complete project idea → Click Generate → Browse results → Download</p>
+          </div>
+
+          <!-- Input Card -->
+          <div class="card p-8 mb-8 hover-lift theme-glow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <label class="text-lg font-semibold theme-text">Describe Your Complete Project Idea</label>
+            </div>
+            <textarea id="ideaInput" rows="6" class="w-full mb-4" placeholder="Example: Build a battery-powered plant watering system using ESP32 that monitors soil moisture and automatically waters when dry. I prefer C++ and need it to run for at least 6 months on a single battery charge. Budget under $30." ${state.loading ? 'disabled' : ''}>${ideaEscaped}</textarea>
+
+            <button id="generateBtn" class="w-full btn btn-primary py-4 px-8 theme-glow" ${state.loading || !state.idea.trim() ? 'disabled' : ''}>
+              ${state.loading ? `${icons.Loader2.replace('class="icon"', 'class="icon animate-spin"')} Generating...` : `${icons.Zap} Generate Complete Project`}
+            </button>
+          </div>
+
+          ${state.loading ? `
+            <div class="card p-6 mb-8 theme-glow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                ${icons.Loader2.replace('class="icon"', 'class="icon animate-spin"')}
+                <span class="text-lg font-medium theme-text">${escapeHtml(state.currentStep)}</span>
+              </div>
+              <div class="w-full bg-white/10 rounded-full h-2"><div class="theme-bg h-2 rounded-full animate-pulse" style="width: 60%"></div></div>
+            </div>
+          ` : ''}
+
+          ${state.error ? `
+            <div class="bg-red-500/20 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-red-500/30 flex items-start gap-3 hover-lift">
+              ${icons.AlertCircle}
+              <div class="flex-1">
+                <h3 class="font-semibold text-red-300 mb-2">Generation Error</h3>
+                <p class="text-red-200">${escapeHtml(state.error)}</p>
+              </div>
+            </div>
+          ` : ''}
+
+          ${state.results ? renderResults() : ''}
         </div>
+      `;
 
-        <div id="analyzingImage" class="hidden" style="margin-bottom: 1rem; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--theme-primary); background: rgba(127, 255, 212, 0.1); display: flex; align-items: center; gap: 0.75rem;">
-          <svg class="icon animate-spin" viewBox="0 0 24 24">
-            <line x1="12" y1="2" x2="12" y2="6"></line>
-            <line x1="12" y1="18" x2="12" y2="22"></line>
-            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-            <line x1="2" y1="12" x2="6" y2="12"></line>
-            <line x1="18" y1="12" x2="22" y2="12"></line>
-            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-          </svg>
-          <p style="color: var(--theme-text); font-size: 0.875rem;">Analyzing your image and generating project description...</p>
+      // Attach small event handlers after rendering
+      const ideaInput = document.getElementById('ideaInput');
+      if (ideaInput) {
+        ideaInput.value = state.idea || '';
+        ideaInput.oninput = (e) => setState({ idea: e.target.value });
+      }
+
+      const togglePageBtn = document.getElementById('togglePageBtn');
+      if (togglePageBtn) togglePageBtn.onclick = togglePage;
+
+      const themeSelect = document.getElementById('themeSelect');
+      if (themeSelect) themeSelect.onchange = (e) => changeTheme(e.target.value);
+
+      const modeSelect = document.getElementById('modeSelect');
+      if (modeSelect) modeSelect.onchange = (e) => changeMode(e.target.value);
+
+      const skipCADEl = document.getElementById('skipCAD');
+      if (skipCADEl) skipCADEl.onchange = (e) => setState({ skipCAD: e.target.checked });
+
+      const generateBtn = document.getElementById('generateBtn');
+      if (generateBtn) generateBtn.onclick = generateProject;
+    }
+
+    function renderHistoryPage(container) {
+      const filteredHistory = state.history.filter(item => {
+        if (!state.searchQuery.trim()) return true;
+        const query = state.searchQuery.toLowerCase();
+        return (
+          (item.plan && item.plan.projectName && item.plan.projectName.toLowerCase().includes(query)) ||
+          (item.idea && item.idea.toLowerCase().includes(query))
+        );
+      });
+
+      container.innerHTML = `
+        <div class="max-w-6xl" style="position: relative;">
+          <div class="fixed top-6 left-6 z-10">
+            <button id="historyBackBtn" class="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80 transition-all theme-text cursor-pointer">
+              ${icons.History}
+              <span class="font-semibold">Back</span>
+            </button>
+          </div>
+
+          <div class="space-y-6">
+            <h2 class="text-3xl font-bold theme-text mb-6">Project History</h2>
+
+            <div class="card p-4 flex items-center gap-3">
+              ${icons.Search}
+              <input id="historySearch" type="text" value="${escapeHtml(state.searchQuery)}" placeholder="Search projects..." class="flex-1 bg-transparent outline-none text-white" />
+            </div>
+
+            ${filteredHistory.length === 0 ? `
+              <div class="card p-12 text-center theme-glow-sm">
+                <div style="width: 64px; height: 64px; margin: 0 auto 1rem;">${icons.History.replace('class="icon"', 'class="icon" style="width: 64px; height: 64px; opacity: 0.5;"')}</div>
+                <p class="text-gray-400 text-lg">${state.searchQuery ? 'No projects match your search' : 'No projects yet. Create your first design!'}</p>
+              </div>
+            ` : `
+              <div class="space-y-4">
+                ${filteredHistory.map((item, idx) => `
+                  <div class="card p-6 hover-lift theme-glow-sm group cursor-pointer" data-idx="${idx}">
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="flex-1">
+                        <h3 class="text-2xl font-bold theme-text mb-2">${escapeHtml((item.plan && item.plan.projectName) || 'Untitled')}</h3>
+                        <p class="text-gray-300 mb-3">${escapeHtml((item.plan && item.plan.description) || '')}</p>
+                        <p class="text-sm text-gray-500">Created: ${new Date(item.timestamp || Date.now()).toLocaleString()}</p>
+                        <p class="text-sm text-gray-400 mt-2 italic">"${escapeHtml(item.idea || '')}"</p>
+                      </div>
+                      <button class="deleteBtn p-3 hover:bg-red-500/20 rounded-lg transition-all text-red-400" title="Delete project">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
         </div>
+      `;
 
-        <textarea 
-          id="ideaInput" 
-          class="input-area" 
-          style="height: 10rem; margin-bottom: 1rem;"
-          placeholder="Example: Build a battery-powered plant watering system using ESP32 that monitors soil moisture and automatically waters when dry. I prefer C++ and need it to run for at least 6 months on a single battery charge. Budget under $30.
+      // Attach handlers
+      const backBtn = document.getElementById('historyBackBtn');
+      if (backBtn) backBtn.onclick = togglePage;
 
-OR click 'Voice' to speak your idea, or 'Image' to upload a sketch!"
-        ></textarea>
+      const searchInput = document.getElementById('historySearch');
+      if (searchInput) searchInput.oninput = (e) => updateSearch(e.target.value);
 
-        <p id="draftSaved" class="hidden" style="font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem;">💾 Draft auto-saved</p>
+      // Attach click handlers for each history card and delete buttons
+      const cards = document.querySelectorAll('[data-idx]');
+      cards.forEach(card => {
+        const idx = Number(card.getAttribute('data-idx'));
+        card.onclick = () => loadFromHistory(idx);
+        const del = card.querySelector('.deleteBtn');
+        if (del) del.onclick = (ev) => { ev.stopPropagation(); deleteFromHistory(idx, ev); };
+      });
+    }
 
-        <button id="generateBtn" class="btn btn-primary theme-glow" style="width: 100%; padding: 1rem 2rem; font-size: 1rem; justify-content: center;">
-          <svg class="icon" style="width: 24px; height: 24px;" viewBox="0 0 24 24">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-          Generate Complete Project
-        </button>
-      </div>
+    // ---- Results rendering ----
+    function renderResults() {
+      if (!state.results || !state.results.plan) return '';
+      const tabs = [
+        { id: 'plan', name: 'Project Plan', icon: 'FileText' },
+        { id: 'cad', name: 'CAD Model', icon: 'Box' },
+        { id: 'pcb', name: 'PCB Layout', icon: 'Cpu' },
+        { id: 'bom', name: 'Electronics BOM', icon: 'Zap' },
+        { id: 'code', name: 'Control Code', icon: 'Code' },
+        { id: 'instructions', name: 'Assembly Guide', icon: 'CheckCircle' }
+      ];
 
-      <!-- Loading State -->
-      <div id="loadingCard" class="card theme-glow-sm hidden">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-          <svg class="icon animate-spin" style="width: 24px; height: 24px; color: var(--theme-text);" viewBox="0 0 24 24">
-            <line x1="12" y1="2" x2="12" y2="6"></line>
-            <line x1="12" y1="18" x2="12" y2="22"></line>
-            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-            <line x1="2" y1="12" x2="6" y2="12"></line>
-            <li
+      return `
+        <div class="space-y-6">
+          <div class="card p-6 flex items-center justify-between hover-lift theme-glow group">
+            <div class="flex items-center gap-3">
+              ${icons.CheckCircle}
+              <div>
+                <h2 class="text-2xl font-bold theme-text">${escapeHtml(state.results.plan.projectName || 'Project')}</h2>
+                <p class="text-gray-300 font-light">${escapeHtml(state.results.plan.description || '')}</p>
+              </div>
+            </div>
+            <button id="downloadAllBtn" class="btn btn-primary theme-glow-sm">${icons.Download} Download All</button>
+          </div>
+
+          <div class="flex gap-2 overflow-x-auto">
+            ${tabs.map(tab => `
+              <button data-tab="${tab.id}" class="${state.activeTab === tab.id ? 'tab-active' : 'tab-inactive'} flex items-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all whitespace-nowrap">
+                ${icons[tab.icon]}
+                ${tab.name}
+              </button>
+            `).join('')}
+          </div>
+
+          <div class="card p-8" style="min-height: 400px;">${renderTabContent()}</div>
+        </div>
+      `;
+    }
+
+    function renderTabContent() {
+      switch (state.activeTab) {
+        case 'plan': return renderPlanTab();
+        case 'cad': return renderCADTab();
+        case 'pcb': return renderPCBTab();
+        case 'bom': return renderBOMTab();
+        case 'code': return renderCodeTab();
+        case 'instructions': return renderInstructionsTab();
+        default: return '';
+      }
+    }
+
+    function renderPlanTab() {
+      const p = state.results.plan || {};
+      return `
+        <div class="space-y-6">
+          <h2 class="text-3xl font-bold theme-text mb-6">Project Plan</h2>
+          <div class="space-y-6">
+            <div class="bg-black/30 rounded-xl p-5 border theme-border">
+              <h3 class="font-semibold theme-text text-lg mb-2">Selected Hardware</h3>
+              <p class="text-gray-100 font-medium text-xl mb-2">${escapeHtml(p.hardware && p.hardware.platform || '')}</p>
+              <p class="text-gray-400 text-sm">${escapeHtml(p.hardware && p.hardware.justification || '')}</p>
+            </div>
+            <div class="bg-black/30 rounded-xl p-5 border theme-border">
+              <h3 class="font-semibold theme-text text-lg mb-2">Programming Language</h3>
+              <p class="text-gray-100 font-medium text-xl mb-2">${escapeHtml(p.language && p.language.primary || '')}</p>
+              <p class="text-gray-400 text-sm">${escapeHtml(p.language && p.language.justification || '')}</p>
+            </div>
+            <div class="bg-black/30 rounded-xl p-5 border theme-border">
+              <h3 class="font-semibold theme-text text-lg mb-2">CAD Requirements</h3>
+              <p class="text-gray-300">${escapeHtml(p.cadRequirements || '')}</p>
+            </div>
+            <div class="bg-black/30 rounded-xl p-5 border theme-border">
+              <h3 class="font-semibold theme-text text-lg mb-2">Electronics Components</h3>
+              <ul class="text-gray-300 space-y-1" style="list-style: disc; padding-left: 1.5rem;">
+                ${(Array.isArray(p.electronicsComponents) ? p.electronicsComponents : []).map(comp => `<li>${escapeHtml(comp)}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="bg-black/30 rounded-xl p-5 border theme-border">
+              <h3 class="font-semibold theme-text text-lg mb-2">Functional Requirements</h3>
+              <p class="text-gray-300">${escapeHtml(p.functionalRequirements || '')}</p>
+            </div>
+            <div class="bg-black/30 rounded-xl p-5 border theme-border">
+              <h3 class="font-semibold theme-text text-lg mb-2">Pin Requirements</h3>
+              <p class="text-gray-300">${escapeHtml(p.pinRequirements || '')}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCADTab() {
+      const code = state.results.openscadCode || '// No CAD available';
+      return `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-3xl font-bold theme-text">3D CAD Model (OpenSCAD)</h2>
+            <div class="flex gap-2">
+              <button id="copyCadBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
+              <button id="downloadCadBtn" class="btn btn-primary">${icons.Download} Download .scad</button>
+            </div>
+          </div>
+          <pre><code>${escapeHtml(code)}</code></pre>
+        </div>
+      `;
+    }
+
+    function renderPCBTab() {
+      const platform = state.results.plan && state.results.plan.hardware && state.results.plan.hardware.platform || 'Platform';
+      const compsCount = state.results.bom && Array.isArray(state.results.bom.components) ? state.results.bom.components.length : 0;
+      return `
+        <div class="space-y-6">
+          <h2 class="text-3xl font-bold theme-text">PCB Layout Preview</h2>
+          <div class="bg-black/50 p-6 rounded-xl border theme-border">
+            <div class="bg-white rounded-lg p-4 text-center" style="min-height: 300px; display: flex; align-items: center; justify-content: center;">
+              <div>
+                <div style="width: 64px; height: 64px; margin: 0 auto 1rem;">${icons.Cpu.replace('class="icon"', 'style="width: 64px; height: 64px; color: #666;"')}</div>
+                <p style="color: #666; font-size: 1.125rem; margin-bottom: 0.5rem;">PCB Layout Preview</p>
+                <p style="color: #999; font-size: 0.875rem;">Conceptual layout for ${escapeHtml(platform)}</p>
+              </div>
+            </div>
+            <div class="mt-4 p-4 rounded-lg" style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
+              <h4 class="font-bold mb-2" style="color: #60a5fa;">PCB Layout Information</h4>
+              <ul class="text-sm text-gray-300 space-y-1" style="list-style: disc; padding-left: 1.5rem;">
+                <li><strong>Board Size:</strong> Optimized for ${escapeHtml(platform)}</li>
+                <li><strong>Layers:</strong> 2-layer design (Top + Bottom)</li>
+                <li><strong>Components:</strong> ${compsCount} total components</li>
+                <li><strong>Power Rails:</strong> +VCC (Red) and GND (Blue)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBOMTab() {
+      const bom = state.results.bom || { components: [], totalEstimatedCost: '', connectionDiagram: '' };
+      return `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-3xl font-bold theme-text">Bill of Materials</h2>
+            <div class="flex gap-2">
+              <button id="copyBomBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
+              <button id="downloadBomBtn" class="btn btn-primary">${icons.Download} Download .json</button>
+            </div>
+          </div>
+          <div class="bg-black/50 p-6 rounded-xl border theme-border">
+            <p class="font-bold theme-text text-2xl">Total Estimated Cost: ${escapeHtml(bom.totalEstimatedCost || '')}</p>
+          </div>
+          <div class="space-y-4">
+            ${ (bom.components || []).map((comp) => `
+              <div class="bg-black/50 p-5 rounded-xl border theme-border hover-lift">
+                <div class="flex justify-between items-start mb-3">
+                  <h4 class="font-semibold text-xl theme-text">${escapeHtml(comp.name || '')}</h4>
+                  <span class="theme-text font-mono font-bold text-lg">${escapeHtml(comp.estimatedCost || '')}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm text-gray-400">
+                  <p><span class="theme-text font-semibold">Quantity:</span> ${escapeHtml(comp.quantity || '')}</p>
+                  <p><span class="theme-text font-semibold">Supplier:</span> ${escapeHtml(comp.supplier || '')}</p>
+                  <p style="grid-column: span 2;"><span class="theme-text font-semibold">Part #:</span> ${escapeHtml(comp.partNumber || '')}</p>
+                  ${comp.pinConnection ? `<p style="grid-column: span 2;"><span class="theme-text font-semibold">Pin:</span> ${escapeHtml(comp.pinConnection)}</p>` : ''}
+                  <p style="grid-column: span 2;"><span class="theme-text font-semibold">Purpose:</span> ${escapeHtml(comp.purpose || '')}</p>
+                </div>
+              </div>
+            `).join('') }
+          </div>
+          <div class="bg-black/50 p-6 rounded-xl border theme-border">
+            <h4 class="font-bold mb-3 theme-text text-xl">Wiring Diagram</h4>
+            <p class="text-gray-300 whitespace-pre-wrap font-light">${escapeHtml(bom.connectionDiagram || '')}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCodeTab() {
+      const code = state.results.controlCode || '';
+      const lang = (state.results.plan && state.results.plan.language && state.results.plan.language.primary) || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-3xl font-bold theme-text">${escapeHtml((state.results.plan && state.results.plan.hardware && state.results.plan.hardware.platform) || 'Platform')} Control Code</h2>
+              <p class="text-gray-400 mt-1">Language: ${escapeHtml(lang)}</p>
+            </div>
+            <div class="flex gap-2">
+              <button id="copyCodeBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
+              <button id="downloadCodeBtn" class="btn btn-primary">${icons.Download} Download Code</button>
+            </div>
+          </div>
+          <pre><code>${escapeHtml(code)}</code></pre>
+        </div>
+      `;
+    }
+
+    function renderInstructionsTab() {
+      const instr = state.results.instructions || '';
+      return `
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-3xl font-bold theme-text">Assembly Instructions</h2>
+            <div class="flex gap-2">
+              <button id="copyInstrBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
+              <button id="downloadInstrBtn" class="btn btn-primary">${icons.Download} Download .txt</button>
+            </div>
+          </div>
+          <div class="bg-black/50 p-6 rounded-xl border theme-border">
+            <div class="whitespace-pre-wrap text-gray-300 font-light">${escapeHtml(instr)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ---- Small utilities used across the app ----
+    function getModeDescription() {
+      const descriptions = {
+        max_speed: '<div><div class="mb-1">~20-30s • Claude Haiku</div><div>800-1000 tokens • Basic outputs</div></div>',
+        moderate: '<div><div class="mb-1">~45-60s • Claude Sonnet</div><div>1200-1500 tokens • Balanced</div></div>',
+        max_detail: '<div><div class="mb-1">~90-120s • Claude Sonnet</div><div>2500-4000 tokens • Comprehensive</div></div>'
+      };
+      return descriptions[state.generationMode];
+    }
+
+    function changeTheme(theme) { setState({ theme }); }
+    function changeMode(mode) { setState({ generationMode: mode }); }
+    function changeTab(tab) { setState({ activeTab: tab }); }
+    function updateSearch(query) { setState({ searchQuery: query }); }
+
+    function togglePage() { setState({ page: state.page === 'main' ? 'history' : 'main' }); }
+
+    function loadFromHistory(idx) {
+      const filtered = state.history.filter(item => {
+        if (!state.searchQuery.trim()) return true;
+        const query = state.searchQuery.toLowerCase();
+        return (
+          (item.plan && item.plan.projectName && item.plan.projectName.toLowerCase().includes(query)) ||
+          (item.idea && item.idea.toLowerCase().includes(query))
+        );
+      });
+      const item = filtered[idx];
+      if (!item) return alert('Selected project not found');
+      setState({ results: item, idea: item.idea || '', page: 'main', activeTab: 'plan' });
+    }
+
+    async function deleteFromHistory(idx, event) {
+      event && event.stopPropagation();
+      const filtered = state.history.filter(item => {
+        if (!state.searchQuery.trim()) return true;
+        const query = state.searchQuery.toLowerCase();
+        return (
+          (item.plan && item.plan.projectName && item.plan.projectName.toLowerCase().includes(query)) ||
+          (item.idea && item.idea.toLowerCase().includes(query))
+        );
+      });
+      const item = filtered[idx];
+      if (!item) return;
+      if (!confirm('Delete this project from history?')) return;
+      try {
+        await storageAPI.delete(`project:${item.id}`);
+        await loadHistory();
+      } catch (e) { console.error('Failed to delete history item', e); }
+    }
+
+    async function loadHistory() {
+      try {
+        const keys = await storageAPI.list('project:');
+        const projects = [];
+        if (keys && Array.isArray(keys.keys)) {
+          for (const key of keys.keys) {
+            try {
+              const data = await storageAPI.get(key);
+              if (data && data.value) projects.push(JSON.parse(data.value));
+            } catch (e) { console.warn('Skipping invalid project:', key); }
+          }
+        } else if (keys && Array.isArray(keys)) {
+          // fallback
+          for (const key of keys) {
+            try { const data = await storageAPI.get(key); if (data && data.value) projects.push(JSON.parse(data.value)); } catch (_) {}
+          }
+        }
+        state.history = projects.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        if (state.page === 'history') render();
+      } catch (e) { console.log('History not available yet', e); }
+    }
+
+    async function saveToHistory(projectData) {
+      const historyItem = Object.assign({ id: Date.now(), timestamp: Date.now(), idea: state.idea }, projectData);
+      try {
+        await storageAPI.set(`project:${historyItem.id}`, JSON.stringify(historyItem));
+        await loadHistory();
+      } catch (e) { console.error('Failed to save to history:', e); }
+    }
+
+    function copyToClipboard(section) {
+      let text = '';
+      switch (section) {
+        case 'cad': text = state.results && state.results.openscadCode || ''; break;
+        case 'bom': text = state.results && state.results.bom ? JSON.stringify(state.results.bom, null, 2) : ''; break;
+        case 'code': text = state.results && state.results.controlCode || ''; break;
+        case 'instructions': text = state.results && state.results.instructions || ''; break;
+        default: text = '';
+      }
+      if (!text) return alert('Nothing to copy');
+      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!')).catch(err => { console.error('Failed to copy:', err); alert('Copy failed'); });
+    }
+
+    function downloadFile(type) {
+      if (!state.results) return alert('No generated project to download');
+      let content = '';
+      let filename = 'download.txt';
+      try {
+        switch (type) {
+          case 'cad': content = state.results.openscadCode || ''; filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}.scad`; break;
+          case 'bom': content = JSON.stringify(state.results.bom || {}, null, 2); filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}_BOM.json`; break;
+          case 'code': {
+            const lang = state.results.plan && state.results.plan.language && state.results.plan.language.primary || '';
+            const ext = (lang === 'Python' || lang === 'MicroPython') ? '.py' : (lang === 'C++' || lang === 'C') ? '.ino' : '.txt';
+            content = state.results.controlCode || '';
+            filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}_main${ext}`;
+            break;
+          }
+          case 'instructions': content = state.results.instructions || ''; filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}_INSTRUCTIONS.txt`; break;
+        }
+
+        if (!content) return alert('No content to download for "' + type + '"');
+
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename; a.style.display = 'none'; document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
+      } catch (err) {
+        console.error('Download failed:', err);
+        navigator.clipboard.writeText(content || '').then(() => alert(`Download blocked by browser. Content copied to clipboard instead! Filename: ${filename}`));
+      }
+    }
+
+    function downloadAllFiles() {
+      downloadFile('cad'); setTimeout(() => downloadFile('bom'), 120); setTimeout(() => downloadFile('code'), 240); setTimeout(() => downloadFile('instructions'), 360);
+    }
+
+    // ---- AI call wrapper (kept general) ----
+    async function callAI(prompt, systemContext = '', mode = state.generationMode) {
+      // NOTE: This function expects the user to configure a compatible endpoint & auth.
+      // The original used Anthropic - keep as-is but guard against missing API details.
+      const fullPrompt = systemContext ? `${systemContext}\n\n${prompt}` : prompt;
+      const modeConfig = {
+        max_speed: { model: 'claude-haiku-4-20250514', maxTokens: 1000, temperature: 0.8 },
+        moderate: { model: 'claude-sonnet-4-20250514', maxTokens: 1500, temperature: 0.7 },
+        max_detail: { model: 'claude-sonnet-4-20250514', maxTokens: 4000, temperature: 0.6 }
+      };
+      const config = modeConfig[mode] || modeConfig.moderate;
+
+      // If there's no network endpoint configured, throw a clear error
+      if (!window.NEUROFAB_API_ENDPOINT) throw new Error('AI endpoint not configured (window.NEUROFAB_API_ENDPOINT)');
+
+      const resp = await fetch(window.NEUROFAB_API_ENDPOINT, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: config.model, max_tokens: config.maxTokens, messages: [{ role: 'user', content: fullPrompt }] })
+      });
+
+      if (!resp.ok) {
+        throw new Error(`API Error ${resp.status}: ${await resp.text()}`);
+      }
+
+      const data = await resp.json();
+      // Try multiple fallback shapes for returned AI text
+      const text = (data && (data.content && data.content[0] && data.content[0].text)) || data.output || data.text || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+      if (!text) throw new Error('Invalid response from AI');
+      return text;
+    }
+
+    // ---- Generation flow ----
+    async function generateProject() {
+      const ideaEl = document.getElementById('ideaInput');
+      const idea = ideaEl ? ideaEl.value : state.idea;
+      if (!idea || !idea.trim()) return alert('Please describe your project idea first!');
+
+      setState({ idea, loading: true, error: null, results: null, activeTab: 'plan', currentStep: 'Starting generation...' });
+
+      try {
+        const promptDetail = {
+          max_speed: { planPrompt: 'Analyze and create a concise project plan with essential details only.', cadPrompt: 'Generate minimal OpenSCAD code for a basic enclosure.', bomPrompt: 'Create a basic BOM with essential components only.', codePrompt: 'Write minimal working code with basic functionality.', instructionsPrompt: 'Provide brief assembly steps.' },
+          moderate: { planPrompt: 'Analyze this project idea and create a detailed plan.', cadPrompt: 'Generate OpenSCAD code for this project.\n\nCreate a functional, 3D-printable enclosure. Include:\n- Mounting holes\n- Component access\n- Cable management', bomPrompt: 'Create a Bill of Materials for this electronics project.', codePrompt: 'Write code with appropriate libraries, initialization, and main loop.', instructionsPrompt: 'Write clear steps for assembly, wiring, installation, and testing.' },
+          max_detail: { planPrompt: 'Carefully analyze this project idea in depth and create a comprehensive, detailed plan with thorough justifications.', cadPrompt: 'Generate detailed OpenSCAD code for this project.\n\nCreate a professional, 3D-printable enclosure with:\n- Precise mounting holes\n- Easy component access\n- Organized cable management\n- Ventilation if needed\n- Professional finish considerations\n- Assembly guides built into the design', bomPrompt: 'Create a comprehensive Bill of Materials with detailed specifications, multiple supplier options where applicable, and exact part numbers.', codePrompt: 'Write well-documented, production-ready code with modular functions and error handling.', instructionsPrompt: 'Write comprehensive, step-by-step assembly instructions.' }
+        };
+
+        const detail = promptDetail[state.generationMode] || promptDetail.moderate;
+
+        setState({ currentStep: 'Analyzing idea and creating plan...' });
+
+        const planText = await callAI(`You are an engineering assistant. ${detail.planPrompt}\n\nProject Idea: ${idea}\n\nCRITICAL: Output ONLY valid JSON with no markdown, no code blocks, no preamble. Start directly with { and end with }\n\n{ "projectName": "short name", "description": "one sentence", "hardware": {"platform": "e.g., ESP32", "justification": "why"}, "language": {"primary": "e.g., C++", "justification": "why"}, "cadRequirements": "physical parts needed", "electronicsComponents": ["list"], "functionalRequirements": "what code does", "pinRequirements": "pins/GPIO needed" }`);
+
+        const cleanedPlanText = planText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        let plan;
+        try { plan = JSON.parse(cleanedPlanText); } catch (e) { throw new Error('Failed to parse plan JSON from AI. Raw output: ' + cleanedPlanText.slice(0, 500)); }
+
+        setState({ currentStep: 'Generating components in parallel...' });
+
+        const cadPromise = (state.generationMode === 'max_speed' && state.skipCAD) ? Promise.resolve('// CAD generation skipped in max speed mode') : callAI(`${detail.cadPrompt}\n\nProject: ${plan.projectName}\nHardware: ${plan.hardware.platform}\nRequirements: ${plan.cadRequirements}\n\nOutput ONLY OpenSCAD code, no explanations.`);
+
+        const bomPromise = callAI(`${detail.bomPrompt}\n\nProject: ${plan.projectName}\nPlatform: ${plan.hardware.platform}\nComponents: ${(plan.electronicsComponents || []).join(', ')}\nPins: ${plan.pinRequirements}\n\nCRITICAL: Output ONLY valid JSON with no markdown, no code blocks. Start directly with { and end with }\n\n{ "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}], "totalEstimatedCost": "", "connectionDiagram": "" }`);
+
+        const codePromise = callAI(`${detail.codePrompt}\n\nProject: ${plan.projectName}\nHardware: ${plan.hardware.platform}\nLanguage: ${plan.language.primary}\nFunctionality: ${plan.functionalRequirements}\nOutput ONLY code, no explanations.`);
+
+        const [openscadCodeRaw, bomTextRaw, controlCodeRaw] = await Promise.all([cadPromise, bomPromise, codePromise]);
+
+        // Parse BOM safely
+        const cleanedBomText = (bomTextRaw || '').replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        let bom;
+        try { bom = cleanedBomText ? JSON.parse(cleanedBomText) : { components: [], totalEstimatedCost: '', connectionDiagram: '' }; } catch (e) { throw new Error('Failed to parse BOM JSON from AI. Raw output: ' + cleanedBomText.slice(0, 500)); }
+
+        setState({ currentStep: 'Creating assembly instructions...' });
+        const instructions = await callAI(`${detail.instructionsPrompt}\nProject: ${plan.projectName}\nHardware: ${plan.hardware.platform}\nLanguage: ${plan.language.primary}\nComponents: ${JSON.stringify(bom.components)}\nWiring: ${bom.connectionDiagram || ''}`);
+
+        const projectData = {
+          plan,
+          openscadCode: (openscadCodeRaw || '').replace(/```.*?\n/g, '').replace(/```/g, ''),
+          bom,
+          controlCode: (controlCodeRaw || '').replace(/```.*?\n/g, '').replace(/```/g, ''),
+          instructions: instructions || ''
+        };
+
+        setState({ results: projectData });
+        await saveToHistory(projectData);
+        setState({ loading: false, currentStep: '' });
+      } catch (err) {
+        console.error('Generation error:', err);
+        setState({ error: safeText(err.message || err), loading: false, currentStep: '' });
+      }
+    }
+
+    // ---- Attach global actions (delegated) ----
+    // Event delegation for buttons inside results area (copy/download/tab change)
+    document.addEventListener('click', (ev) => {
+      const t = ev.target;
+      const btn = t.closest && t.closest('[data-tab]');
+      if (btn) {
+        const tab = btn.getAttribute('data-tab');
+        if (tab) changeTab(tab);
+        return;
+      }
+
+      if (t.id === 'downloadAllBtn') { downloadAllFiles(); return; }
+      if (t.id === 'copyCadBtn') { copyToClipboard('cad'); return; }
+      if (t.id === 'downloadCadBtn') { downloadFile('cad'); return; }
+      if (t.id === 'copyBomBtn') { copyToClipboard('bom'); return; }
+      if (t.id === 'downloadBomBtn') { downloadFile('bom'); return; }
+      if (t.id === 'copyCodeBtn') { copyToClipboard('code'); return; }
+      if (t.id === 'downloadCodeBtn') { downloadFile('code'); return; }
+      if (t.id === 'copyInstrBtn') { copyToClipboard('instructions'); return; }
+      if (t.id === 'downloadInstrBtn') { downloadFile('instructions'); return; }
+      if (t.id === 'downloadAllBtn') { downloadAllFiles(); return; }
+      // Tab buttons
+      const tabBtn = t.closest && t.closest('[data-tab]');
+      if (tabBtn) { changeTab(tabBtn.getAttribute('data-tab')); }
+    });
+
+    // Initialize
+    loadHistory(); render();
+
+    // Expose a safe API for integration/tests
+    window.NeuroFab = { state, render, generateProject, loadHistory };
+  })();
+  </script>
+</body>
+</html>
+66
