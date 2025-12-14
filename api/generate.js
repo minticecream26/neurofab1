@@ -1,55 +1,55 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+// /api/generate.js
+import fetch from "node-fetch";
 
+export default async function handler(req, res) {
   try {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
     const { prompt } = req.body;
 
-    if (!prompt || typeof prompt !== "string") {
-      return res.status(400).json({ error: "Missing prompt" });
+    if (!prompt || prompt.trim().length === 0) {
+      return res.status(400).json({ error: "Prompt is required" });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: "API key not configured" });
+      return res.status(500).json({ error: "Missing GEMINI_API_KEY environment variable" });
     }
 
-    const geminiRes = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
-        apiKey,
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
-          ]
-        })
+          prompt: { text: prompt },
+          temperature: 0.7,
+          candidate_count: 1,
+        }),
       }
     );
 
-    const data = await geminiRes.json();
-
-    if (!geminiRes.ok) {
-      return res.status(500).json({
-        error: "Gemini API error",
-        details: data
-      });
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(response.status).json({ error: `Gemini API error: ${text}` });
     }
 
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response generated.";
+    const data = await response.json();
 
-    res.status(200).json({ text });
+    // Extract text from response
+    const outputText =
+      data?.candidates?.[0]?.output?.[0]?.content?.[0]?.text ||
+      "No content returned from Gemini";
+
+    res.status(200).json({ text: outputText });
   } catch (err) {
-    res.status(500).json({
-      error: "Server error",
-      message: err.message
-    });
+    console.error("Generation error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 }
+
