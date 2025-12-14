@@ -1,903 +1,718 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NeuroFab - Cleaned</title>
-  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <style>
-    /* (styles left unchanged from original for visual parity) */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Comfortaa', cursive; margin: 0; padding: 0; overflow-x: hidden; }
-    .app-container { min-height: 100vh; padding: 2rem; transition: all 0.5s ease; color: white; }
-    .theme-mint { background: linear-gradient(to bottom right, black, #064e3b, black); --theme-primary: #7FFFD4; --theme-secondary: #5FE6B4; --theme-accent: #9FFFD4; --theme-glow: rgba(127, 255, 212, 0.3); --theme-text: #7FFFD4; }
-    .theme-ocean { background: linear-gradient(to bottom right, black, #1e3a8a, black); --theme-primary: #4A90E2; --theme-secondary: #357ABD; --theme-accent: #5DADE2; --theme-glow: rgba(74, 144, 226, 0.3); --theme-text: #4A90E2; }
-    .theme-purple { background: linear-gradient(to bottom right, black, #581c87, black); --theme-primary: #9B59B6; --theme-secondary: #7D3C98; --theme-accent: #BB8FCE; --theme-glow: rgba(155, 89, 182, 0.3); --theme-text: #9B59B6; }
-    .theme-orange { background: linear-gradient(to bottom right, black, #7c2d12, black); --theme-primary: #FF8C42; --theme-secondary: #E67E22; --theme-accent: #FFAA6F; --theme-glow: rgba(255, 140, 66, 0.3); --theme-text: #FF8C42; }
-    .theme-glow { box-shadow: 0 0 20px var(--theme-glow); }
-    .theme-glow-sm { box-shadow: 0 0 10px var(--theme-glow); }
-    .hover-lift { transition: all 0.3s ease; }
-    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 8px 30px var(--theme-glow); }
-    .theme-border { border-color: var(--theme-primary); }
-    .theme-text { color: var(--theme-text); }
-    .theme-bg { background-color: var(--theme-primary); }
-    .tab-active { background-color: var(--theme-primary); color: #000; }
-    .tab-inactive { background-color: rgba(255, 255, 255, 0.1); color: var(--theme-text); }
-    ::-webkit-scrollbar { width: 12px; height: 12px; }
-    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: var(--theme-primary); border-radius: 10px; border: 2px solid rgba(0, 0, 0, 0.3); }
-    ::-webkit-scrollbar-thumb:hover { background: var(--theme-secondary); box-shadow: 0 0 10px var(--theme-glow); }
-    .max-w-6xl { max-width: 72rem; margin: 0 auto; }
-    .btn { border: none; cursor: pointer; font-family: 'Comfortaa', cursive; transition: all 0.3s ease; outline: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background-color: var(--theme-primary); color: black; }
-    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
-    .flex { display: flex; }
-    .flex-col { flex-direction: column; }
-    .items-center { align-items: center; }
-    .items-start { align-items: flex-start; }
-    .justify-between { justify-content: space-between; }
-    .justify-center { justify-content: center; }
-    .gap-2 { gap: 0.5rem; }
-    .gap-3 { gap: 0.75rem; }
-    .gap-4 { gap: 1rem; }
-    .gap-6 { gap: 1.5rem; }
-    .p-2 { padding: 0.5rem; } .p-3 { padding: 0.75rem; } .p-4 { padding: 1rem; }
-    .p-5 { padding: 1.25rem; } .p-6 { padding: 1.5rem; } .p-8 { padding: 2rem; } .p-12 { padding: 3rem; }
-    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-    .px-4 { padding-left: 1rem; padding-right: 1rem; }
-    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-    .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; }
-    .mb-3 { margin-bottom: 0.75rem; } .mb-4 { margin-bottom: 1rem; }
-    .mb-6 { margin-bottom: 1.5rem; } .mb-8 { margin-bottom: 2rem; }
-    .mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; }
-    .mt-3 { margin-top: 0.75rem; } .mt-4 { margin-top: 1rem; }
-    .mt-6 { margin-top: 1.5rem; } .ml-7 { margin-left: 1.75rem; }
-    .mx-auto { margin-left: auto; margin-right: auto; }
-    .text-xs { font-size: 0.75rem; } .text-sm { font-size: 0.875rem; }
-    .text-base { font-size: 1rem; } .text-lg { font-size: 1.125rem; }
-    .text-xl { font-size: 1.25rem; } .text-2xl { font-size: 1.5rem; }
-    .text-3xl { font-size: 1.875rem; } .text-6xl { font-size: 3.75rem; }
-    .font-light { font-weight: 300; } .font-medium { font-weight: 500; }
-    .font-semibold { font-weight: 600; } .font-bold { font-weight: 700; }
-    .text-white { color: white; } .text-black { color: black; }
-    .text-gray-300 { color: #d1d5db; } .text-gray-400 { color: #9ca3af; }
-    .text-gray-500 { color: #6b7280; } .text-red-200 { color: #fecaca; }
-    .text-red-300 { color: #fca5a5; } .text-red-400 { color: #f87171; }
-    .text-yellow-400 { color: #facc15; } .text-blue-300 { color: #93c5fd; }
-    .text-blue-400 { color: #60a5fa; } .text-green-400 { color: #4ade80; }
-    .bg-black { background-color: black; } .bg-transparent { background-color: transparent; }
-    .rounded-lg { border-radius: 0.5rem; } .rounded-xl { border-radius: 0.75rem; }
-    .rounded-2xl { border-radius: 1rem; } .rounded-full { border-radius: 9999px; }
-    .border { border-width: 1px; border-style: solid; }
-    .w-full { width: 100%; } .h-full { height: 100%; } .flex-1 { flex: 1; }
-    .overflow-auto { overflow: auto; } .overflow-x-auto { overflow-x: auto; }
-    .overflow-y-auto { overflow-y: auto; }
-    .text-center { text-align: center; } .text-left { text-align: left; }
-    .whitespace-pre-wrap { white-space: pre-wrap; } .whitespace-nowrap { white-space: nowrap; }
-    .opacity-50 { opacity: 0.5; } .cursor-pointer { cursor: pointer; }
-    .transition-all { transition: all 0.3s ease; }
-    .absolute { position: absolute; } .relative { position: relative; } .fixed { position: fixed; }
-    .top-6 { top: 1.5rem; } .left-6 { left: 1.5rem; } .right-6 { right: 1.5rem; }
-    .bottom-6 { bottom: 1.5rem; } .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-    .z-10 { z-index: 10; } .z-50 { z-index: 50; } .z-100 { z-index: 100; }
-    .backdrop-blur-lg { backdrop-filter: blur(16px); }
-    .space-y-4 > * + * { margin-top: 1rem; }
-    .space-y-6 > * + * { margin-top: 1.5rem; }
-    .grid { display: grid; } .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .hidden { display: none !important; } .block { display: block; }
-    .animate-spin { animation: spin 1s linear infinite; }
-    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .icon { display: inline-block; width: 20px; height: 20px; stroke-width: 2; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
-    .icon-lg { width: 24px; height: 24px; }
-    input, textarea, select { font-family: 'Comfortaa', cursive; }
-    .card { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(16px); border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.2); }
-    pre { overflow-x: auto; font-family: monospace; background: rgba(0, 0, 0, 0.5); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--theme-primary); max-height: 600px; overflow-y: auto; }
-    code { font-family: monospace; color: #d1d5db; }
-    textarea { background: rgba(0, 0, 0, 0.3); border: 1px solid var(--theme-primary); border-radius: 0.75rem; padding: 1rem; color: white; resize: none; }
-    textarea::placeholder { color: #6b7280; }
-    input[type="text"] { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--theme-primary); border-radius: 0.5rem; padding: 0.5rem 1rem; color: white; }
-    select { background-color: black; color: var(--theme-text); font-weight: 600; padding: 0.5rem; border-radius: 0.25rem; border: none; cursor: pointer; }
-    .hover\:opacity-90:hover { opacity: 0.9; }
-    .hover\:bg-white\/10:hover { background-color: rgba(255, 255, 255, 0.1); }
-    .bg-black\/40 { background-color: rgba(0, 0, 0, 0.4); }
-    .bg-black\/50 { background-color: rgba(0, 0, 0, 0.5); }
-    .bg-red-500\/20 { background-color: rgba(239, 68, 68, 0.2); }
-    .border-white\/20 { border-color: rgba(255, 255, 255, 0.2); }
-    .border-red-500\/30 { border-color: rgba(239, 68, 68, 0.3); }
-    @media (max-width: 768px) { .app-container { padding: 1rem; } .text-6xl { font-size: 2.5rem; } }
-    /* Fix History button font */
-  #togglePageBtn span, #historyBackBtn span {
-    font-family: 'Comfortaa', cursive !important;
-  }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NeuroFab — Interactive UI (Full)</title>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-top:#0a3b27;
+  --bg-mid:#0f5b3a;
+  --bg-bottom:#021b12;
+  --accent:#7fffd4;
+  --accent-2:#5fe6b4;
+  --accent-dark:#003b27;
+  --muted:#dffbf3;
+  --card:rgba(0,0,0,0.45);
+  --glass-border:rgba(255,255,255,0.04);
+  --control-h:56px;
+  --corner-gap:26px;
+  --hover-translate:-8px;
+  --hover-shadow:0 24px 50px rgba(0,0,0,0.55);
+  --pop-glow:0 0 30px rgba(127,255,212,0.2);
+  --tab-gap:10px;
+  --tab-radius:12px;
+  --tab-selected-bg:var(--accent);
+  --tab-selected-color:var(--accent-dark);
+  --modal-bg:rgba(0,0,0,0.85);
+}
 
-  /* Dropdown theme colors */
-  select#themeSelect option[value="mint"] {
-    background-color: black;
-    color: #7FFFD4;
-  }
-  select#themeSelect option[value="ocean"] {
-    background-color: black;
-    color: #4A90E2;
-  }
-  select#themeSelect option[value="purple"] {
-    background-color: black;
-    color: #BB8FCE;
-  }
-  select#themeSelect option[value="orange"] {
-    background-color: black;
-    color: #FF8C42;
-  }
+/* Global */
+*{box-sizing:border-box;font-family:'Comfortaa',cursive!important;}
+html,body{height:100%;margin:0;background:linear-gradient(160deg,var(--bg-top) 0%, var(--bg-mid) 45%, var(--bg-bottom) 100%);background-attachment:fixed;color:var(--muted);-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none}
+
+/* Page layout */
+.page{padding-top:140px;padding-left:var(--corner-gap);padding-right:var(--corner-gap)}
+.wrap{max-width:1180px;margin:0 auto}
+
+/* Header */
+.header{display:flex;justify-content:center;align-items:center;gap:20px;margin-bottom:18px}
+.logo-box{width:100px;height:100px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));border:1px solid var(--glass-border);box-shadow:0 18px 40px rgba(0,0,0,0.45)}
+.logo-svg{width:120px;height:120px;color:var(--accent)}
+.title-wrap{display:flex;flex-direction:column;align-items:center}
+.title{font-size:54px;margin:0;color:var(--accent);font-weight:700;white-space:nowrap}
+.subtitle{margin-top:6px;color:var(--accent);font-weight:300;white-space:nowrap}
+
+/* Fixed history and top controls */
+.history-btn{position:fixed;left:var(--corner-gap);top:var(--corner-gap);height:var(--control-h);display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--glass-border);color:var(--accent);cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,0.45);transition:transform .12s,box-shadow .12s;z-index:120}
+.history-btn:hover{transform:translateY(var(--hover-translate));box-shadow:var(--hover-shadow)}
+.history-btn svg{width:20px;height:20px;display:block}
+
+/* top-controls (theme + speed) */
+.top-controls{position:fixed;right:var(--corner-gap);top:var(--corner-gap);display:flex;gap:18px;z-index:120}
+.control{height:var(--control-h);padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--glass-border);display:flex;flex-direction:column;justify-content:center;position:relative;cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,0.45);transition:transform .12s,box-shadow .12s;color:inherit;min-width:160px}
+.control:hover{transform:translateY(var(--hover-translate));box-shadow:var(--hover-shadow)}
+.control-label{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;white-space:nowrap;color:white}
+.select-row{display:flex;align-items:center;justify-content:space-between;line-height:1}
+.swatch{width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,0.06);flex-shrink:0;flex-grow:0;background:transparent;display:inline-block}
+
+/* Theme control: larger so closed box doesn't wrap */
+#themeControl{min-width:240px}
+
+/* dropdown */
+.dropdown{display:none;position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;min-width:200px;width:auto;text-align:left;z-index:250;box-shadow:0 16px 40px rgba(0,0,0,0.5)}
+.dropdown .item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.dropdown .item:hover{background:rgba(255,255,255,0.02);transform:translateY(-3px)}
+.dropdown .item .text {
+  flex: 1;               /* Take remaining space */
+  text-align: center;    /* Center horizontally in that space */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Info & card */
+.info{max-width:1000px;margin:0 auto;margin-bottom:18px;padding:12px 18px;border-radius:14px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.04));box-shadow:0 10px 30px rgba(0,0,0,0.45);text-align:center;color:var(--accent);transition:transform .12s,box-shadow .12s}
+.info:hover{transform:translateY(var(--hover-translate));box-shadow:var(--hover-shadow)}
+.card{max-width:980px;margin:0 auto;padding:22px;border-radius:16px;background:linear-gradient(180deg, rgba(0,0,0,0.5), rgba(0,0,0,0.43));border:1px solid rgba(127,255,212,0.03);box-shadow:0 30px 80px rgba(0,0,0,0.6);transition:transform .12s,box-shadow .12s;color:var(--accent)}
+.card:hover{transform:translateY(var(--hover-translate));box-shadow:var(--hover-shadow)}
+.card .heading{text-align:center;font-size:22px;margin:0 0 12px;font-weight:700;color:var(--accent)}
+
+/* textarea (prompt) - full width inside card */
+textarea{width:100%;min-height:160px;border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.25);color:var(--muted);resize:vertical;transition:transform .12s,box-shadow .12s}
+textarea:hover,textarea:focus{transform:translateY(var(--hover-translate));box-shadow:var(--hover-shadow);outline:none}
+
+/* controls row */
+.controls-row{display:flex;justify-content:space-between;align-items:center;color:var(--accent);gap:12px}
+.controls-row input[type=checkbox]{cursor:pointer;transition:transform .12s,box-shadow .12s}
+.controls-row input[type=checkbox]:hover{transform:translateY(var(--hover-translate));box-shadow:var(--hover-shadow)}
+
+/* generate button - MATCH PROMPT width: full width inside the card */
+.generate-wrap{margin-top:22px;display:flex;justify-content:center}
+.btn-generate{width:100%;padding:14px 22px;border-radius:12px;background:linear-gradient(180deg,var(--accent),var(--accent-2));border:none;font-weight:800;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--accent-dark);box-shadow:inset 0 6px 18px rgba(255,255,255,0.03),0 18px 40px rgba(0,0,0,0.55);transition:transform .12s,box-shadow .12s}
+.btn-generate:hover{transform:translateY(var(--hover-translate));box-shadow:var(--hover-shadow)}
+.btn-generate:disabled{opacity:0.55;cursor:not-allowed}
+
+/* Download All button (same width as generate, centered) */
+#downloadAllWrap{margin-top:14px;display:none;justify-content:center}
+#downloadAllBtn{width:100%;padding:12px 18px;border-radius:12px;background:linear-gradient(180deg,var(--accent-2),var(--accent));border:none;font-weight:800;font-size:16px;cursor:pointer;color:var(--accent-dark);box-shadow:0 12px 30px rgba(0,0,0,0.45)}
+
+/* Tabs */
+.tabs-wrap{margin-top:18px;display:none;max-width:980px;margin-left:auto;margin-right:auto}
+.tabs{display:flex;gap:var(--tab-gap);align-items:stretch;width:100%}
+.tab-btn{flex:1;padding:12px 14px;border-radius:var(--tab-radius);background:var(--card);color:var(--accent);cursor:pointer;border:1px solid var(--glass-border);font-weight:700;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px}
+.tab-btn:hover{transform:translateY(-4px)}
+.tab-btn.active{background:var(--tab-selected-bg);color:var(--tab-selected-color);box-shadow:0 8px 20px rgba(0,0,0,0.35)}
+.tab-content{margin-top:12px;padding:16px;border-radius:12px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.03);min-height:160px;color:var(--muted);transition:all .18s;white-space:pre-wrap}
+
+/* tab controls (copy, download) under tabs */
+.tab-controls{display:flex;gap:12px;margin-top:10px;justify-content:flex-end}
+.action-btn{padding:10px 12px;border-radius:10px;background:var(--card);border:1px solid var(--glass-border);cursor:pointer;font-weight:700;color:var(--accent);transition:all .12s}
+.action-btn:hover{transform:translateY(-4px);box-shadow:var(--pop-glow)}
+
+/* history modal (fixed, translucent) */
+#historyModal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;max-width:1200px;height:86%;border-radius:16px;display:none;flex-direction:column;z-index:400;box-shadow:0 40px 120px rgba(0,0,0,0.7);overflow:hidden;background:var(--modal-bg);border:1px solid var(--glass-border)}
+#historyHeader{display:flex;align-items:center;justify-content:space-between;padding:18px;border-bottom:1px solid rgba(255,255,255,0.06);font-weight:800;color:var(--accent);background:linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0))}
+#closeHistoryBtn{background:transparent;border:none;font-size:20px;color:var(--accent);cursor:pointer;padding:8px;border-radius:8px}
+#historyInner{display:flex;flex-direction:column;padding:16px;height:100%}
+#historySearch{padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--muted);margin-bottom:12px}
+#historyList{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;padding-right:6px}
+.history-card{background:linear-gradient(180deg, rgba(0,0,0,0.22), rgba(0,0,0,0.12));padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:8px}
+.history-title{font-weight:800;color:var(--accent)}
+.history-desc{color:var(--muted)}
+.history-prompt{color:rgba(255,255,255,0.75);font-style:italic}
+.history-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* small screens */
+@media(max-width:780px){
+  .top-controls{right:12px;flex-direction:column}
+  .control{min-width:160px}
+  #historyList{grid-template-columns:1fr}
+  .logo-svg{width:96px;height:96px}
+  .title{font-size:36px}
+  .tab-btn{padding:10px}
+}
+#themeControl .select-row > div {
+  display: flex;
+  align-items: center;
+  flex: 1;            /* Fill remaining space */
+}
+
+#themeName {
+  flex: 1;             /* Take all horizontal space after swatch */
+  text-align: center;  /* Center the text */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.control .dropdown {
+  width: 100%;       /* Make dropdown match the parent control width */
+  left: 0;           /* Align left edge with parent */
+  transform: none;   /* Remove the old translateX */
+}
+.control {
+  padding-top: 28px; /* leave enough space for the label */
+  padding-bottom: 12px;
+}
 
 </style>
 </head>
 <body>
-  <div id="app"></div>
+<!-- History button -->
+<button id="historyBtn" class="history-btn" title="History" aria-haspopup="dialog" aria-label="Open history">
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="2" fill="none"/>
+    <line x1="32" y1="18" x2="32" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <line x1="32" y1="32" x2="42" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+  <span style="font-weight:700">History</span>
+</button>
 
-  <script>
-  (function () {
-    // ---- State (kept as close to original as possible) ----
-    const state = {
-      idea: '',
-      loading: false,
-      currentStep: '',
-      results: null,
-      error: null,
-      theme: 'mint',
-      activeTab: 'plan',
-      page: 'main',
-      history: [],
-      generationMode: 'moderate',
-      skipCAD: true,
-      favorites: [],
-      searchQuery: ''
-    };
+<!-- Top controls: theme + speed -->
+<div class="top-controls" role="toolbar" aria-label="Controls">
+  <div class="control" id="themeControl" tabindex="0" aria-haspopup="menu" aria-expanded="false" title="Change theme">
+    <div class="control-label">Theme</div>
+    <div class="select-row">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;max-width:100%">
+        <div id="themeSwatch" class="swatch" aria-hidden="true"></div>
+        <div id="themeName" style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Glacial Mint</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="1.6"/></svg>
+    </div>
+    <div class="dropdown" id="themeDropdown" role="menu" aria-label="Theme options"></div>
+  </div>
 
-    // ---- Icons (unchanged, kept as SVG strings) ----
-    const icons = {
-      Zap: '<svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
-      History: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 3v5h5"></path><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path><path d="M12 7v5l4 2"></path></svg>',
-      Palette: '<svg class="icon" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>',
-      Loader2: '<svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>',
-      Download: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
-      AlertCircle: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
-      CheckCircle: '<svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
-      FileText: '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
-      Box: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>',
-      Code: '<svg class="icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
-      Cpu: '<svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>',
-      Search: '<svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>'
-    };
+  <div class="control" id="speedControl" tabindex="0" aria-haspopup="menu" aria-expanded="false" title="Change generation speed">
+    <div class="control-label">Speed</div>
+    <div class="select-row">
+      <div id="speedName" style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">⚙️ Moderate</div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="1.6"/></svg>
+    </div>
+    <div class="dropdown" id="speedDropdown" role="menu" aria-label="Speed options"></div>
+  </div>
+</div>
 
-    // ---- Helpers ----
-    function safeText(value) {
-      return (value === null || value === undefined) ? '' : String(value);
-    }
+<!-- Main page -->
+<div class="page">
+  <div class="wrap">
+    <header class="header" role="banner">
+      <div class="logo-box" aria-hidden="true">
+        <svg class="logo-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <path d="M20 30c-3-6 0-12 6-14 6-2 12 2 14 6 6-1 12 2 14 8 2 6-2 12-8 14H22c-6 0-8-6-2-14z"/>
+            <line x1="40" y1="20" x2="40" y2="14"/>
+            <circle cx="40" cy="12" r="2" fill="currentColor"/>
+            <line x1="48" y1="34" x2="48" y2="40"/>
+            <circle cx="48" cy="40" r="2" fill="currentColor"/>
+            <line x1="28" y1="38" x2="28" y2="44"/>
+            <circle cx="28" cy="44" r="2" fill="currentColor"/>
+            <path d="M22 28h10"/>
+            <path d="M36 34h10"/>
+          </g>
+        </svg>
+      </div>
+      <div class="title-wrap">
+        <div class="title">NeuroFab</div>
+        <div class="subtitle">AI-Powered Engineering Design Generator</div>
+      </div>
+    </header>
 
-    function escapeHtml(text) {
-      const s = safeText(text);
-      const div = document.createElement('div');
-      div.textContent = s;
-      return div.innerHTML;
-    }
+    <div class="info">💡 How to use: Describe your complete project idea → Click Generate → Browse results → Download</div>
 
-    function setState(partial) {
-      Object.assign(state, partial);
-      // Render after state change
-      render();
-    }
+    <div class="card" role="main" aria-labelledby="heading">
+      <div class="heading" id="heading">Describe Your Complete Project Idea</div>
+      <textarea id="ideaInput" placeholder="Example: Build a battery-powered plant watering system using ESP32..."></textarea>
 
-    // ---- Storage helpers: use window.storage if available; otherwise localStorage fallback ----
-    const storageAPI = (function () {
-      const hasWindowStorage = typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function';
-      return {
-        async list(prefix) {
-          if (hasWindowStorage) return window.storage.list(prefix);
-          const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
-          return { keys };
-        },
-        async get(key) {
-          if (hasWindowStorage) return window.storage.get(key);
-          return { value: localStorage.getItem(key) };
-        },
-        async set(key, value) {
-          if (hasWindowStorage) return window.storage.set(key, value);
-          localStorage.setItem(key, value);
-        },
-        async delete(key) {
-          if (hasWindowStorage) return window.storage.delete(key);
-          localStorage.removeItem(key);
-        }
-      };
-    })();
+      <div class="controls-row" style="margin-top:12px">
+        <div id="modeDescription">Balanced • Good detail • Reliable JSON</div>
+        <label style="display:flex;align-items:center;gap:8px"><input id="skipCAD" type="checkbox"> Skip CAD</label>
+      </div>
 
-    // ---- Rendering ----
-    function render() {
-      const app = document.getElementById('app');
-      if (!app) return;
-      app.className = `app-container theme-${state.theme}`;
+      <div class="generate-wrap" style="margin-top:18px">
+        <button id="generateBtn" class="btn-generate" disabled aria-live="polite" aria-label="Generate project">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right:8px" aria-hidden="true"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke="var(--accent-dark)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="genLabel">Generate Complete Project</span>
+        </button>
+      </div>
 
-      if (state.page === 'history') {
-        renderHistoryPage(app);
-      } else {
-        renderMainPage(app);
-      }
-    }
+      <!-- download all under generate -->
+      <div id="downloadAllWrap" style="display:none;justify-content:center;margin-top:10px">
+        <button id="downloadAllBtn" class="btn-generate" aria-hidden="true">Download All</button>
+      </div>
 
-    function renderMainPage(container) {
-      // Safe values
-      const ideaEscaped = escapeHtml(state.idea || '');
-      const modeDescription = getModeDescription() || '';
+      <!-- Tabs (appear after generation) -->
+      <div class="tabs-wrap" id="tabsWrap" aria-hidden="true" style="display:none">
+        <div class="tabs" id="tabs" role="tablist" aria-label="Result tabs"></div>
+        <div class="tab-controls" id="tabControls" style="margin-top:12px"></div>
+        <div class="tab-content" id="tabContent" role="region" aria-live="polite" style="margin-top:10px"></div>
+      </div>
 
-      container.innerHTML = `
-        <div class="max-w-6xl" style="position: relative;">
-          <!-- Top Navigation -->
-          <div class="fixed top-6 left-6 z-10">
-            <button id="togglePageBtn" class="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80 transition-all theme-text cursor-pointer">
-              ${icons.History}
-              <span class="font-semibold">${state.page === 'main' ? 'History' : 'Back'}</span>
-            </button>
-          </div>
+      <!-- results quick area -->
+      <div id="results" class="results" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
 
-          <div class="fixed top-6 right-6 z-10 flex flex-col gap-3">
-            <div class="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-2 border border-white/20">
-              ${icons.Palette}
-              <select id="themeSelect" class="bg-black theme-text font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1">
-                <option value="mint" ${state.theme === 'mint' ? 'selected' : ''}>Glacial Mint</option>
-                <option value="ocean" ${state.theme === 'ocean' ? 'selected' : ''}>Ocean Blue</option>
-                <option value="purple" ${state.theme === 'purple' ? 'selected' : ''}>Royal Purple</option>
-                <option value="orange" ${state.theme === 'orange' ? 'selected' : ''}>Sunset Orange</option>
-              </select>
-            </div>
+<!-- HISTORY MODAL -->
+<div id="historyModal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div id="historyHeader">Project History
+    <button id="closeHistoryBtn" aria-label="Close history">✕</button>
+  </div>
+  <div id="historyInner">
+    <input id="historySearch" placeholder="Search projects..." />
+    <div id="historyList" aria-live="polite"></div>
+  </div>
+</div>
 
-            <div class="bg-black/40 backdrop-blur-lg rounded-lg p-2 border border-white/20 flex items-start gap-2 flex-col">
-              <div class="flex items-center gap-2 mb-2">
-                ${icons.Zap}
-                <select id="modeSelect" class="bg-black theme-text font-semibold outline-none cursor-pointer pr-2 rounded px-2 py-1" ${state.loading ? 'disabled' : ''}>
-                  <option value="max_speed" ${state.generationMode === 'max_speed' ? 'selected' : ''}>⚡ Max Speed</option>
-                  <option value="moderate" ${state.generationMode === 'moderate' ? 'selected' : ''}>⚙️ Moderate</option>
-                  <option value="max_detail" ${state.generationMode === 'max_detail' ? 'selected' : ''}>🔬 Max Detail</option>
-                </select>
-              </div>
-              <div class="text-xs text-gray-400 ml-7 mb-2" id="modeDescription">${modeDescription}</div>
+<script>
+/* ====== DATA ====== */
+const THEMES = [
+  { id:'mint', name:'Glacial Mint', accent:'#7fffd4', accentDark:'#5fe6b4', textDark:'#003b27', bgTop:'#0a3b27', bgMid:'#0f5b3a', bgBottom:'#021b12' },
+  { id:'ocean', name:'Ocean Blue', accent:'#4A90E2', accentDark:'#357ABD', textDark:'#042f5f', bgTop:'#06263f', bgMid:'#0d3f62', bgBottom:'#02203a' },
+  { id:'purple', name:'Royal Purple', accent:'#BB8FCE', accentDark:'#7D3C98', textDark:'#3a1550', bgTop:'#1a092b', bgMid:'#32165a', bgBottom:'#0e0820' },
+  { id:'orange', name:'Sunset Orange', accent:'#FF8C42', accentDark:'#E67E22', textDark:'#5c2c08', bgTop:'#3a1208', bgMid:'#6a2c0c', bgBottom:'#2b0b05' }
+];
+const SPEEDS = [
+  { id:'max_speed', label:'⚡ Max Speed', desc:'~20–35s • Short outputs', model:'fast' },
+  { id:'moderate', label:'⚙️ Moderate', desc:'~45–60s • Balanced', model:'balanced' },
+  { id:'max_detail', label:'🔬 Max Detail', desc:'~90–120s • Detailed', model:'detailed' }
+];
+const TAB_LIST = [
+  { id:'plan', label:'Project Plan' },
+  { id:'bom', label:'Electronics BOM' },
+  { id:'code', label:'Code' },
+  { id:'cad', label:'CAD Model' },
+  { id:'assembly', label:'Assembly Guide' },
+  { id:'tips', label:'Helpful Tips' }
+];
 
-              ${state.generationMode === 'max_speed' ? `
-                <label class="flex items-center gap-2 ml-7 cursor-pointer group">
-                  <input type="checkbox" id="skipCAD" ${state.skipCAD ? 'checked' : ''} ${state.loading ? 'disabled' : ''} />
-                  <span class="text-xs text-gray-300">Skip CAD generation</span>
-                </label>
-              ` : ''}
-            </div>
-          </div>
+/* ====== STATE ====== */
+let state = {
+  theme: 'mint',
+  speed: 'moderate',
+  loading: false,
+  history: [],
+  generated: null,
+  activeTab: 'plan'
+};
 
-          <!-- Header -->
-          <div class="text-center mb-8">
-            <div class="flex items-center justify-center gap-4 mb-6">
-              <svg width="90" height="90" viewBox="0 0 400 400" style="fill: var(--theme-primary); stroke: var(--theme-primary);">
-                <rect x="30" y="30" width="340" height="340" rx="50" ry="50" fill="none" stroke-width="12"/>
-                <path d="M 80 200 Q 80 160 110 160 Q 110 120 150 120 Q 190 120 205 150 Q 205 190 205 220 Q 205 260 175 275 Q 145 275 115 260 Q 80 245 80 200 Z" stroke="none"/>
-                <line x1="205" y1="155" x2="260" y2="155" stroke-width="10"/>
-                <path d="M 260 155 L 280 155 Q 300 155 300 135" fill="none" stroke-width="10"/>
-                <circle cx="300" cy="135" r="13"/>
-                <line x1="205" y1="200" x2="310" y2="200" stroke-width="10"/>
-                <circle cx="310" cy="200" r="13"/>
-                <line x1="205" y1="245" x2="260" y2="245" stroke-width="10"/>
-                <path d="M 260 245 L 280 245 Q 300 245 300 265" fill="none" stroke-width="10"/>
-                <circle cx="300" cy="265" r="13"/>
-              </svg>
-              <h1 class="text-6xl font-bold theme-text">NeuroFab</h1>
-            </div>
-            <p class="text-xl text-gray-300 font-light">AI-Powered Engineering Design Generator</p>
-            <p class="text-sm text-gray-400 mt-2">Transform ideas into CAD models, electronics BOMs, and control code</p>
-          </div>
+/* ====== ELEMENTS ====== */
+const themeControl = document.getElementById('themeControl');
+const themeDropdown = document.getElementById('themeDropdown');
+const themeSwatch = document.getElementById('themeSwatch');
+const themeName = document.getElementById('themeName');
+const speedControl = document.getElementById('speedControl');
+const speedDropdown = document.getElementById('speedDropdown');
+const speedName = document.getElementById('speedName');
+const ideaInput = document.getElementById('ideaInput');
+const generateBtn = document.getElementById('generateBtn');
+const genLabel = document.getElementById('genLabel');
+const skipCADBox = document.getElementById('skipCAD');
+const resultsDiv = document.getElementById('results');
+const tabsWrap = document.getElementById('tabsWrap');
+const tabsEl = document.getElementById('tabs');
+const tabContent = document.getElementById('tabContent');
+const tabControls = document.getElementById('tabControls');
+const downloadAllWrap = document.getElementById('downloadAllWrap');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const historyBtn = document.getElementById('historyBtn');
+const historyModal = document.getElementById('historyModal');
+const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+const historyList = document.getElementById('historyList');
+const historySearch = document.getElementById('historySearch');
 
-          <!-- Instructions Card -->
-          <div class="card p-4 theme-glow-sm mb-8">
-            <p class="text-center theme-text text-sm font-medium">💡 <strong>How to use:</strong> Describe your complete project idea → Click Generate → Browse results → Download</p>
-          </div>
+/* ====== THEME + DROPDOWNS ====== */
+function applyTheme(id){
+  const t = THEMES.find(x=>x.id===id) || THEMES[0];
+  state.theme = id;
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent-2', t.accentDark);
+  document.documentElement.style.setProperty('--accent-dark', t.textDark || '#003');
+  document.documentElement.style.setProperty('--bg-top', t.bgTop);
+  document.documentElement.style.setProperty('--bg-mid', t.bgMid);
+  document.documentElement.style.setProperty('--bg-bottom', t.bgBottom);
+  document.documentElement.style.setProperty('--tab-selected-bg', t.accent);
+  document.documentElement.style.setProperty('--tab-selected-color', t.textDark || '#003');
+  // update name & swatch
+  themeName.textContent = t.name;
+  themeSwatch.style.background = t.accent;
+  // Modify visible elements color to match theme
+  document.querySelectorAll('.logo-svg, .card, .info, .controls-row div, .title, .subtitle').forEach(el => {
+    el.style.color = t.accent;
+  });
+  // history header/title color
+  document.querySelectorAll('#historyHeader, .history-title').forEach(el => el.style.color = t.accent);
 
-          <!-- Input Card -->
-          <div class="card p-8 mb-8 hover-lift theme-glow-sm">
-            <div class="flex items-center justify-between mb-4">
-              <label class="text-lg font-semibold theme-text">Describe Your Complete Project Idea</label>
-            </div>
-            <textarea id="ideaInput" rows="6" class="w-full mb-4" placeholder="Example: Build a battery-powered plant watering system using ESP32 that monitors soil moisture and automatically waters when dry. I prefer C++ and need it to run for at least 6 months on a single battery charge. Budget under $30." ${state.loading ? 'disabled' : ''}>${ideaEscaped}</textarea>
+  // history button icon/text light
+  document.querySelectorAll('.history-btn').forEach(el => el.style.color = t.accent);
 
-            <button id="generateBtn" class="w-full btn btn-primary py-4 px-8 theme-glow" ${state.loading || !state.idea.trim() ? 'disabled' : ''}>
-              ${state.loading ? `${icons.Loader2.replace('class="icon"', 'class="icon animate-spin"')} Generating...` : `${icons.Zap} Generate Complete Project`}
-            </button>
-          </div>
+  // buttons contrast: make sure generate/download have dark text for legibility
+  document.querySelectorAll('.btn-generate, #downloadAllBtn').forEach(b => {
+    b.style.color = t.textDark || '#003';
+  });
 
-          ${state.loading ? `
-            <div class="card p-6 mb-8 theme-glow-sm">
-              <div class="flex items-center gap-3 mb-4">
-                ${icons.Loader2.replace('class="icon"', 'class="icon animate-spin"')}
-                <span class="text-lg font-medium theme-text">${escapeHtml(state.currentStep)}</span>
-              </div>
-              <div class="w-full bg-white/10 rounded-full h-2"><div class="theme-bg h-2 rounded-full animate-pulse" style="width: 60%"></div></div>
-            </div>
-          ` : ''}
+  // update tab styling live
+  updateTabStyles();
+}
 
-          ${state.error ? `
-            <div class="bg-red-500/20 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-red-500/30 flex items-start gap-3 hover-lift">
-              ${icons.AlertCircle}
-              <div class="flex-1">
-                <h3 class="font-semibold text-red-300 mb-2">Generation Error</h3>
-                <p class="text-red-200">${escapeHtml(state.error)}</p>
-              </div>
-            </div>
-          ` : ''}
+/* build theme dropdown */
+function buildThemeDropdown(){
+  themeDropdown.innerHTML = '';
+  THEMES.forEach(t => {
+    const it = document.createElement('div');
+    it.className = 'item';
+    it.innerHTML = `<div class="swatch" style="background:${t.accent}"></div><div class="text">${t.name}</div>`;
+    it.tabIndex = 0;
+    it.addEventListener('click', e => { e.stopPropagation(); applyTheme(t.id); themeDropdown.style.display='none'; renderTabs(); });
+    it.addEventListener('keydown', e => { if(e.key==='Enter') it.click(); });
+    themeDropdown.appendChild(it);
+  });
+}
 
-          ${state.results ? renderResults() : ''}
-        </div>
-      `;
+/* build speed dropdown */
+function buildSpeedDropdown(){
+  speedDropdown.innerHTML = '';
+  SPEEDS.forEach(s => {
+    const it = document.createElement('div');
+    it.className = 'item';
+    it.innerHTML = `<div class="text">${s.label}</div>`;
+    it.tabIndex = 0;
+    it.addEventListener('click', e => { e.stopPropagation(); setSpeed(s.id); speedDropdown.style.display='none'; });
+    it.addEventListener('keydown', e => { if(e.key==='Enter') it.click(); });
+    speedDropdown.appendChild(it);
+  });
+}
 
-      // Attach small event handlers after rendering
-      const ideaInput = document.getElementById('ideaInput');
-      if (ideaInput) {
-        ideaInput.value = state.idea || '';
-        ideaInput.oninput = (e) => setState({ idea: e.target.value });
-      }
+function setSpeed(id){
+  const s = SPEEDS.find(x=>x.id===id) || SPEEDS[1];
+  state.speed = id;
+  speedName.textContent = s.label;
+  document.getElementById('modeDescription').textContent = s.desc || '';
+}
 
-      const togglePageBtn = document.getElementById('togglePageBtn');
-      if (togglePageBtn) togglePageBtn.onclick = togglePage;
+/* dropdown toggles */
+themeControl.addEventListener('click', e => { e.stopPropagation(); speedDropdown.style.display='none'; themeDropdown.style.display = themeDropdown.style.display==='block' ? 'none' : 'block'; });
+speedControl.addEventListener('click', e => { e.stopPropagation(); themeDropdown.style.display='none'; speedDropdown.style.display = speedDropdown.style.display==='block' ? 'none' : 'block'; });
+window.addEventListener('click', ()=>{ themeDropdown.style.display='none'; speedDropdown.style.display='none'; });
 
-      const themeSelect = document.getElementById('themeSelect');
-      if (themeSelect) themeSelect.onchange = (e) => changeTheme(e.target.value);
+/* keyboard accessibility */
+themeControl.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' ') { e.preventDefault(); themeControl.click(); } });
+speedControl.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' ') { e.preventDefault(); speedControl.click(); } });
 
-      const modeSelect = document.getElementById('modeSelect');
-      if (modeSelect) modeSelect.onchange = (e) => changeMode(e.target.value);
+/* ====== HISTORY ====== */
+function openHistory(){ historyModal.style.display='flex'; historyModal.setAttribute('aria-hidden','false'); renderHistory(); }
+function closeHistory(){ historyModal.style.display='none'; historyModal.setAttribute('aria-hidden','true'); }
+historyBtn.addEventListener('click', openHistory);
+closeHistoryBtn.addEventListener('click', closeHistory);
+historySearch.addEventListener('input', renderHistory);
 
-      const skipCADEl = document.getElementById('skipCAD');
-      if (skipCADEl) skipCADEl.onchange = (e) => setState({ skipCAD: e.target.checked });
+function loadHistoryFromStorage(){
+  try{
+    const raw = localStorage.getItem('neurofab_history_v1');
+    if(raw){
+      state.history = JSON.parse(raw);
+    } else state.history = [];
+  }catch(e){ state.history = []; console.error('Load history failed', e); }
+}
+function saveHistoryToStorage(){
+  try{
+    localStorage.setItem('neurofab_history_v1', JSON.stringify(state.history.slice(0,200)));
+  }catch(e){ console.error('Save history failed', e); }
+}
 
-      const generateBtn = document.getElementById('generateBtn');
-      if (generateBtn) generateBtn.onclick = generateProject;
-    }
+function saveToHistory(record){
+  // ensure unique by id (newest first)
+  state.history = [record].concat(state.history.filter(r => r.id !== record.id));
+  if(state.history.length > 200) state.history.length = 200;
+  saveHistoryToStorage();
+  renderHistory();
+}
 
-    function renderHistoryPage(container) {
-      const filteredHistory = state.history.filter(item => {
-        if (!state.searchQuery.trim()) return true;
-        const query = state.searchQuery.toLowerCase();
-        return (
-          (item.plan && item.plan.projectName && item.plan.projectName.toLowerCase().includes(query)) ||
-          (item.idea && item.idea.toLowerCase().includes(query))
-        );
+function renderHistory(){
+  historyList.innerHTML = '';
+  const q = (historySearch.value || '').toLowerCase();
+  const list = state.history.filter(h => {
+    if(!q) return true;
+    return (h.title||'').toLowerCase().includes(q) || (h.desc||'').toLowerCase().includes(q) || (h.prompt||'').toLowerCase().includes(q);
+  });
+  if(list.length === 0){
+    historyList.innerHTML = `<div style="color:rgba(255,255,255,0.6);padding:20px;text-align:center">No projects yet — generate one to see it here.</div>`;
+    return;
+  }
+  list.forEach(h => {
+    const card = document.createElement('div');
+    card.className = 'history-card';
+    card.innerHTML = `
+      <div class="history-title">${escapeHtml(h.title)}</div>
+      <div class="history-desc">${escapeHtml(h.desc || '')}</div>
+      <div class="history-prompt">${escapeHtml(h.prompt || '')}</div>
+      <div class="history-actions">
+        <button class="action-btn" data-action="open" data-id="${h.id}" title="Open project">Open</button>
+        <button class="action-btn" data-action="copy" data-id="${h.id}" title="Copy generated text">Copy</button>
+        <button class="action-btn" data-action="download" data-id="${h.id}" title="Download generated text">Download</button>
+        <button class="action-btn" data-action="delete" data-id="${h.id}" title="Delete" style="background:#ff4444;color:#111">Delete</button>
+      </div>
+    `;
+    // wire actions
+    card.querySelectorAll('[data-action]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const act = btn.dataset.action;
+        const id = btn.dataset.id;
+        handleHistoryAction(act, id);
       });
+    });
+    card.addEventListener('click', ()=>{ openProjectInUI(h); closeHistory(); });
+    historyList.appendChild(card);
+  });
+}
 
-      container.innerHTML = `
-        <div class="max-w-6xl" style="position: relative;">
-          <div class="fixed top-6 left-6 z-10">
-            <button id="historyBackBtn" class="flex items-center gap-2 bg-black/40 backdrop-blur-lg rounded-lg p-3 border border-white/20 hover:opacity-80 transition-all theme-text cursor-pointer">
-              ${icons.History}
-              <span class="font-semibold">Back</span>
-            </button>
-          </div>
+function handleHistoryAction(action, id){
+  const idx = state.history.findIndex(x => String(x.id) === String(id));
+  if(idx === -1) return;
+  const rec = state.history[idx];
+  if(action === 'open'){ openProjectInUI(rec); closeHistory(); }
+  else if(action === 'copy'){ navigator.clipboard.writeText(rec.generatedText || rec.plan || rec.bom || rec.code || rec.assembly || rec.tips || ''); flashMessage('Copied to clipboard'); }
+  else if(action === 'download'){ downloadStringAsFile(rec.generatedText || rec.plan || rec.bom || rec.code || rec.assembly || rec.tips || '', `${sanitizeFilename(rec.title||'project')}.txt`); }
+  else if(action === 'delete'){ if(confirm('Delete this project?')){ state.history.splice(idx,1); saveHistoryToStorage(); renderHistory(); } }
+}
 
-          <div class="space-y-6">
-            <h2 class="text-3xl font-bold theme-text mb-6">Project History</h2>
+/* open project into UI: populate textarea and results */
+function openProjectInUI(rec){
+  ideaInput.value = rec.prompt || '';
+  generateBtn.disabled = false;
+  if(rec.generated){
+    loadGeneratedIntoUI(rec.generated);
+  } else {
+    resultsDiv.innerHTML = `<div style="padding:12px;border-radius:10px;background:rgba(0,0,0,0.25);color:var(--muted)"><strong>${escapeHtml(rec.title)}</strong><div style="white-space:pre-wrap;margin-top:8px">${escapeHtml(rec.generatedText || rec.plan || '')}</div></div>`;
+  }
+}
 
-            <div class="card p-4 flex items-center gap-3">
-              ${icons.Search}
-              <input id="historySearch" type="text" value="${escapeHtml(state.searchQuery)}" placeholder="Search projects..." class="flex-1 bg-transparent outline-none text-white" />
-            </div>
 
-            ${filteredHistory.length === 0 ? `
-              <div class="card p-12 text-center theme-glow-sm">
-                <div style="width: 64px; height: 64px; margin: 0 auto 1rem;">${icons.History.replace('class="icon"', 'class="icon" style="width: 64px; height: 64px; opacity: 0.5;"')}</div>
-                <p class="text-gray-400 text-lg">${state.searchQuery ? 'No projects match your search' : 'No projects yet. Create your first design!'}</p>
-              </div>
-            ` : `
-              <div class="space-y-4">
-                ${filteredHistory.map((item, idx) => `
-                  <div class="card p-6 hover-lift theme-glow-sm group cursor-pointer" data-idx="${idx}">
-                    <div class="flex items-start justify-between gap-4">
-                      <div class="flex-1">
-                        <h3 class="text-2xl font-bold theme-text mb-2">${escapeHtml((item.plan && item.plan.projectName) || 'Untitled')}</h3>
-                        <p class="text-gray-300 mb-3">${escapeHtml((item.plan && item.plan.description) || '')}</p>
-                        <p class="text-sm text-gray-500">Created: ${new Date(item.timestamp || Date.now()).toLocaleString()}</p>
-                        <p class="text-sm text-gray-400 mt-2 italic">"${escapeHtml(item.idea || '')}"</p>
-                      </div>
-                      <button class="deleteBtn p-3 hover:bg-red-500/20 rounded-lg transition-all text-red-400" title="Delete project">
-                        <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                      </button>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            `}
-          </div>
-        </div>
-      `;
+/* Generate click */
+ideaInput.addEventListener('input', ()=> {
+  generateBtn.disabled = ideaInput.value.trim().length < 3;
+});
+generateBtn.addEventListener('click', async () => {
+  if (generateBtn.disabled) return;
 
-      // Attach handlers
-      const backBtn = document.getElementById('historyBackBtn');
-      if (backBtn) backBtn.onclick = togglePage;
+  try {
+    generateBtn.disabled = true;
+    const prevLabel = genLabel.textContent;
+    genLabel.textContent = 'Generating...';
 
-      const searchInput = document.getElementById('historySearch');
-      if (searchInput) searchInput.oninput = (e) => updateSearch(e.target.value);
+    const prompt = ideaInput.value.trim();
 
-      // Attach click handlers for each history card and delete buttons
-      const cards = document.querySelectorAll('[data-idx]');
-      cards.forEach(card => {
-        const idx = Number(card.getAttribute('data-idx'));
-        card.onclick = () => loadFromHistory(idx);
-        const del = card.querySelector('.deleteBtn');
-        if (del) del.onclick = (ev) => { ev.stopPropagation(); deleteFromHistory(idx, ev); };
-      });
-    }
-
-    // ---- Results rendering ----
-    function renderResults() {
-      if (!state.results || !state.results.plan) return '';
-      const tabs = [
-        { id: 'plan', name: 'Project Plan', icon: 'FileText' },
-        { id: 'cad', name: 'CAD Model', icon: 'Box' },
-        { id: 'pcb', name: 'PCB Layout', icon: 'Cpu' },
-        { id: 'bom', name: 'Electronics BOM', icon: 'Zap' },
-        { id: 'code', name: 'Control Code', icon: 'Code' },
-        { id: 'instructions', name: 'Assembly Guide', icon: 'CheckCircle' }
-      ];
-
-      return `
-        <div class="space-y-6">
-          <div class="card p-6 flex items-center justify-between hover-lift theme-glow group">
-            <div class="flex items-center gap-3">
-              ${icons.CheckCircle}
-              <div>
-                <h2 class="text-2xl font-bold theme-text">${escapeHtml(state.results.plan.projectName || 'Project')}</h2>
-                <p class="text-gray-300 font-light">${escapeHtml(state.results.plan.description || '')}</p>
-              </div>
-            </div>
-            <button id="downloadAllBtn" class="btn btn-primary theme-glow-sm">${icons.Download} Download All</button>
-          </div>
-
-          <div class="flex gap-2 overflow-x-auto">
-            ${tabs.map(tab => `
-              <button data-tab="${tab.id}" class="${state.activeTab === tab.id ? 'tab-active' : 'tab-inactive'} flex items-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all whitespace-nowrap">
-                ${icons[tab.icon]}
-                ${tab.name}
-              </button>
-            `).join('')}
-          </div>
-
-          <div class="card p-8" style="min-height: 400px;">${renderTabContent()}</div>
-        </div>
-      `;
-    }
-
-    function renderTabContent() {
-      switch (state.activeTab) {
-        case 'plan': return renderPlanTab();
-        case 'cad': return renderCADTab();
-        case 'pcb': return renderPCBTab();
-        case 'bom': return renderBOMTab();
-        case 'code': return renderCodeTab();
-        case 'instructions': return renderInstructionsTab();
-        default: return '';
-      }
-    }
-
-    function renderPlanTab() {
-      const p = state.results.plan || {};
-      return `
-        <div class="space-y-6">
-          <h2 class="text-3xl font-bold theme-text mb-6">Project Plan</h2>
-          <div class="space-y-6">
-            <div class="bg-black/30 rounded-xl p-5 border theme-border">
-              <h3 class="font-semibold theme-text text-lg mb-2">Selected Hardware</h3>
-              <p class="text-gray-100 font-medium text-xl mb-2">${escapeHtml(p.hardware && p.hardware.platform || '')}</p>
-              <p class="text-gray-400 text-sm">${escapeHtml(p.hardware && p.hardware.justification || '')}</p>
-            </div>
-            <div class="bg-black/30 rounded-xl p-5 border theme-border">
-              <h3 class="font-semibold theme-text text-lg mb-2">Programming Language</h3>
-              <p class="text-gray-100 font-medium text-xl mb-2">${escapeHtml(p.language && p.language.primary || '')}</p>
-              <p class="text-gray-400 text-sm">${escapeHtml(p.language && p.language.justification || '')}</p>
-            </div>
-            <div class="bg-black/30 rounded-xl p-5 border theme-border">
-              <h3 class="font-semibold theme-text text-lg mb-2">CAD Requirements</h3>
-              <p class="text-gray-300">${escapeHtml(p.cadRequirements || '')}</p>
-            </div>
-            <div class="bg-black/30 rounded-xl p-5 border theme-border">
-              <h3 class="font-semibold theme-text text-lg mb-2">Electronics Components</h3>
-              <ul class="text-gray-300 space-y-1" style="list-style: disc; padding-left: 1.5rem;">
-                ${(Array.isArray(p.electronicsComponents) ? p.electronicsComponents : []).map(comp => `<li>${escapeHtml(comp)}</li>`).join('')}
-              </ul>
-            </div>
-            <div class="bg-black/30 rounded-xl p-5 border theme-border">
-              <h3 class="font-semibold theme-text text-lg mb-2">Functional Requirements</h3>
-              <p class="text-gray-300">${escapeHtml(p.functionalRequirements || '')}</p>
-            </div>
-            <div class="bg-black/30 rounded-xl p-5 border theme-border">
-              <h3 class="font-semibold theme-text text-lg mb-2">Pin Requirements</h3>
-              <p class="text-gray-300">${escapeHtml(p.pinRequirements || '')}</p>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderCADTab() {
-      const code = state.results.openscadCode || '// No CAD available';
-      return `
-        <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-3xl font-bold theme-text">3D CAD Model (OpenSCAD)</h2>
-            <div class="flex gap-2">
-              <button id="copyCadBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
-              <button id="downloadCadBtn" class="btn btn-primary">${icons.Download} Download .scad</button>
-            </div>
-          </div>
-          <pre><code>${escapeHtml(code)}</code></pre>
-        </div>
-      `;
-    }
-
-    function renderPCBTab() {
-      const platform = state.results.plan && state.results.plan.hardware && state.results.plan.hardware.platform || 'Platform';
-      const compsCount = state.results.bom && Array.isArray(state.results.bom.components) ? state.results.bom.components.length : 0;
-      return `
-        <div class="space-y-6">
-          <h2 class="text-3xl font-bold theme-text">PCB Layout Preview</h2>
-          <div class="bg-black/50 p-6 rounded-xl border theme-border">
-            <div class="bg-white rounded-lg p-4 text-center" style="min-height: 300px; display: flex; align-items: center; justify-content: center;">
-              <div>
-                <div style="width: 64px; height: 64px; margin: 0 auto 1rem;">${icons.Cpu.replace('class="icon"', 'style="width: 64px; height: 64px; color: #666;"')}</div>
-                <p style="color: #666; font-size: 1.125rem; margin-bottom: 0.5rem;">PCB Layout Preview</p>
-                <p style="color: #999; font-size: 0.875rem;">Conceptual layout for ${escapeHtml(platform)}</p>
-              </div>
-            </div>
-            <div class="mt-4 p-4 rounded-lg" style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
-              <h4 class="font-bold mb-2" style="color: #60a5fa;">PCB Layout Information</h4>
-              <ul class="text-sm text-gray-300 space-y-1" style="list-style: disc; padding-left: 1.5rem;">
-                <li><strong>Board Size:</strong> Optimized for ${escapeHtml(platform)}</li>
-                <li><strong>Layers:</strong> 2-layer design (Top + Bottom)</li>
-                <li><strong>Components:</strong> ${compsCount} total components</li>
-                <li><strong>Power Rails:</strong> +VCC (Red) and GND (Blue)</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderBOMTab() {
-      const bom = state.results.bom || { components: [], totalEstimatedCost: '', connectionDiagram: '' };
-      return `
-        <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-3xl font-bold theme-text">Bill of Materials</h2>
-            <div class="flex gap-2">
-              <button id="copyBomBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
-              <button id="downloadBomBtn" class="btn btn-primary">${icons.Download} Download .json</button>
-            </div>
-          </div>
-          <div class="bg-black/50 p-6 rounded-xl border theme-border">
-            <p class="font-bold theme-text text-2xl">Total Estimated Cost: ${escapeHtml(bom.totalEstimatedCost || '')}</p>
-          </div>
-          <div class="space-y-4">
-            ${ (bom.components || []).map((comp) => `
-              <div class="bg-black/50 p-5 rounded-xl border theme-border hover-lift">
-                <div class="flex justify-between items-start mb-3">
-                  <h4 class="font-semibold text-xl theme-text">${escapeHtml(comp.name || '')}</h4>
-                  <span class="theme-text font-mono font-bold text-lg">${escapeHtml(comp.estimatedCost || '')}</span>
-                </div>
-                <div class="grid grid-cols-2 gap-3 text-sm text-gray-400">
-                  <p><span class="theme-text font-semibold">Quantity:</span> ${escapeHtml(comp.quantity || '')}</p>
-                  <p><span class="theme-text font-semibold">Supplier:</span> ${escapeHtml(comp.supplier || '')}</p>
-                  <p style="grid-column: span 2;"><span class="theme-text font-semibold">Part #:</span> ${escapeHtml(comp.partNumber || '')}</p>
-                  ${comp.pinConnection ? `<p style="grid-column: span 2;"><span class="theme-text font-semibold">Pin:</span> ${escapeHtml(comp.pinConnection)}</p>` : ''}
-                  <p style="grid-column: span 2;"><span class="theme-text font-semibold">Purpose:</span> ${escapeHtml(comp.purpose || '')}</p>
-                </div>
-              </div>
-            `).join('') }
-          </div>
-          <div class="bg-black/50 p-6 rounded-xl border theme-border">
-            <h4 class="font-bold mb-3 theme-text text-xl">Wiring Diagram</h4>
-            <p class="text-gray-300 whitespace-pre-wrap font-light">${escapeHtml(bom.connectionDiagram || '')}</p>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderCodeTab() {
-      const code = state.results.controlCode || '';
-      const lang = (state.results.plan && state.results.plan.language && state.results.plan.language.primary) || '';
-      return `
-        <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-3xl font-bold theme-text">${escapeHtml((state.results.plan && state.results.plan.hardware && state.results.plan.hardware.platform) || 'Platform')} Control Code</h2>
-              <p class="text-gray-400 mt-1">Language: ${escapeHtml(lang)}</p>
-            </div>
-            <div class="flex gap-2">
-              <button id="copyCodeBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
-              <button id="downloadCodeBtn" class="btn btn-primary">${icons.Download} Download Code</button>
-            </div>
-          </div>
-          <pre><code>${escapeHtml(code)}</code></pre>
-        </div>
-      `;
-    }
-
-    function renderInstructionsTab() {
-      const instr = state.results.instructions || '';
-      return `
-        <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-3xl font-bold theme-text">Assembly Instructions</h2>
-            <div class="flex gap-2">
-              <button id="copyInstrBtn" class="flex items-center gap-2 bg-black/50 hover:bg-white/10 text-white font-semibold px-4 py-2 rounded-lg transition-all border theme-border">Copy</button>
-              <button id="downloadInstrBtn" class="btn btn-primary">${icons.Download} Download .txt</button>
-            </div>
-          </div>
-          <div class="bg-black/50 p-6 rounded-xl border theme-border">
-            <div class="whitespace-pre-wrap text-gray-300 font-light">${escapeHtml(instr)}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    // ---- Small utilities used across the app ----
-    function getModeDescription() {
-      const descriptions = {
-        max_speed: '<div><div class="mb-1">~20-30s • Claude Haiku</div><div>800-1000 tokens • Basic outputs</div></div>',
-        moderate: '<div><div class="mb-1">~45-60s • Claude Sonnet</div><div>1200-1500 tokens • Balanced</div></div>',
-        max_detail: '<div><div class="mb-1">~90-120s • Claude Sonnet</div><div>2500-4000 tokens • Comprehensive</div></div>'
-      };
-      return descriptions[state.generationMode];
-    }
-
-    function changeTheme(theme) { setState({ theme }); }
-    function changeMode(mode) { setState({ generationMode: mode }); }
-    function changeTab(tab) { setState({ activeTab: tab }); }
-    function updateSearch(query) { setState({ searchQuery: query }); }
-
-    function togglePage() { setState({ page: state.page === 'main' ? 'history' : 'main' }); }
-
-    function loadFromHistory(idx) {
-      const filtered = state.history.filter(item => {
-        if (!state.searchQuery.trim()) return true;
-        const query = state.searchQuery.toLowerCase();
-        return (
-          (item.plan && item.plan.projectName && item.plan.projectName.toLowerCase().includes(query)) ||
-          (item.idea && item.idea.toLowerCase().includes(query))
-        );
-      });
-      const item = filtered[idx];
-      if (!item) return alert('Selected project not found');
-      setState({ results: item, idea: item.idea || '', page: 'main', activeTab: 'plan' });
-    }
-
-    async function deleteFromHistory(idx, event) {
-      event && event.stopPropagation();
-      const filtered = state.history.filter(item => {
-        if (!state.searchQuery.trim()) return true;
-        const query = state.searchQuery.toLowerCase();
-        return (
-          (item.plan && item.plan.projectName && item.plan.projectName.toLowerCase().includes(query)) ||
-          (item.idea && item.idea.toLowerCase().includes(query))
-        );
-      });
-      const item = filtered[idx];
-      if (!item) return;
-      if (!confirm('Delete this project from history?')) return;
-      try {
-        await storageAPI.delete(`project:${item.id}`);
-        await loadHistory();
-      } catch (e) { console.error('Failed to delete history item', e); }
-    }
-
-    async function loadHistory() {
-      try {
-        const keys = await storageAPI.list('project:');
-        const projects = [];
-        if (keys && Array.isArray(keys.keys)) {
-          for (const key of keys.keys) {
-            try {
-              const data = await storageAPI.get(key);
-              if (data && data.value) projects.push(JSON.parse(data.value));
-            } catch (e) { console.warn('Skipping invalid project:', key); }
-          }
-        } else if (keys && Array.isArray(keys)) {
-          // fallback
-          for (const key of keys) {
-            try { const data = await storageAPI.get(key); if (data && data.value) projects.push(JSON.parse(data.value)); } catch (_) {}
-          }
-        }
-        state.history = projects.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        if (state.page === 'history') render();
-      } catch (e) { console.log('History not available yet', e); }
-    }
-
-    async function saveToHistory(projectData) {
-      const historyItem = Object.assign({ id: Date.now(), timestamp: Date.now(), idea: state.idea }, projectData);
-      try {
-        await storageAPI.set(`project:${historyItem.id}`, JSON.stringify(historyItem));
-        await loadHistory();
-      } catch (e) { console.error('Failed to save to history:', e); }
-    }
-
-    function copyToClipboard(section) {
-      let text = '';
-      switch (section) {
-        case 'cad': text = state.results && state.results.openscadCode || ''; break;
-        case 'bom': text = state.results && state.results.bom ? JSON.stringify(state.results.bom, null, 2) : ''; break;
-        case 'code': text = state.results && state.results.controlCode || ''; break;
-        case 'instructions': text = state.results && state.results.instructions || ''; break;
-        default: text = '';
-      }
-      if (!text) return alert('Nothing to copy');
-      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!')).catch(err => { console.error('Failed to copy:', err); alert('Copy failed'); });
-    }
-
-    function downloadFile(type) {
-      if (!state.results) return alert('No generated project to download');
-      let content = '';
-      let filename = 'download.txt';
-      try {
-        switch (type) {
-          case 'cad': content = state.results.openscadCode || ''; filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}.scad`; break;
-          case 'bom': content = JSON.stringify(state.results.bom || {}, null, 2); filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}_BOM.json`; break;
-          case 'code': {
-            const lang = state.results.plan && state.results.plan.language && state.results.plan.language.primary || '';
-            const ext = (lang === 'Python' || lang === 'MicroPython') ? '.py' : (lang === 'C++' || lang === 'C') ? '.ino' : '.txt';
-            content = state.results.controlCode || '';
-            filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}_main${ext}`;
-            break;
-          }
-          case 'instructions': content = state.results.instructions || ''; filename = `${(state.results.plan && state.results.plan.projectName || 'project').replace(/\s+/g,'_')}_INSTRUCTIONS.txt`; break;
-        }
-
-        if (!content) return alert('No content to download for "' + type + '"');
-
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = filename; a.style.display = 'none'; document.body.appendChild(a); a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
-      } catch (err) {
-        console.error('Download failed:', err);
-        navigator.clipboard.writeText(content || '').then(() => alert(`Download blocked by browser. Content copied to clipboard instead! Filename: ${filename}`));
-      }
-    }
-
-    function downloadAllFiles() {
-      downloadFile('cad'); setTimeout(() => downloadFile('bom'), 120); setTimeout(() => downloadFile('code'), 240); setTimeout(() => downloadFile('instructions'), 360);
-    }
-
-    // ---- AI call wrapper (kept general) ----
-    async function callAI(prompt, systemContext = '', mode = state.generationMode) {
-      // NOTE: This function expects the user to configure a compatible endpoint & auth.
-      // The original used Anthropic - keep as-is but guard against missing API details.
-      const fullPrompt = systemContext ? `${systemContext}\n\n${prompt}` : prompt;
-      const modeConfig = {
-        max_speed: { model: 'claude-haiku-4-20250514', maxTokens: 1000, temperature: 0.8 },
-        moderate: { model: 'claude-sonnet-4-20250514', maxTokens: 1500, temperature: 0.7 },
-        max_detail: { model: 'claude-sonnet-4-20250514', maxTokens: 4000, temperature: 0.6 }
-      };
-      const config = modeConfig[mode] || modeConfig.moderate;
-
-      // If there's no network endpoint configured, throw a clear error
-      if (!window.NEUROFAB_API_ENDPOINT) throw new Error('AI endpoint not configured (window.NEUROFAB_API_ENDPOINT)');
-
-      const resp = await fetch(window.NEUROFAB_API_ENDPOINT, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: config.model, max_tokens: config.maxTokens, messages: [{ role: 'user', content: fullPrompt }] })
-      });
-
-      if (!resp.ok) {
-        throw new Error(`API Error ${resp.status}: ${await resp.text()}`);
-      }
-
-      const data = await resp.json();
-      // Try multiple fallback shapes for returned AI text
-      const text = (data && (data.content && data.content[0] && data.content[0].text)) || data.output || data.text || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
-      if (!text) throw new Error('Invalid response from AI');
-      return text;
-    }
-
-    // ---- Generation flow ----
-    async function generateProject() {
-      const ideaEl = document.getElementById('ideaInput');
-      const idea = ideaEl ? ideaEl.value : state.idea;
-      if (!idea || !idea.trim()) return alert('Please describe your project idea first!');
-
-      setState({ idea, loading: true, error: null, results: null, activeTab: 'plan', currentStep: 'Starting generation...' });
-
-      try {
-        const promptDetail = {
-          max_speed: { planPrompt: 'Analyze and create a concise project plan with essential details only.', cadPrompt: 'Generate minimal OpenSCAD code for a basic enclosure.', bomPrompt: 'Create a basic BOM with essential components only.', codePrompt: 'Write minimal working code with basic functionality.', instructionsPrompt: 'Provide brief assembly steps.' },
-          moderate: { planPrompt: 'Analyze this project idea and create a detailed plan.', cadPrompt: 'Generate OpenSCAD code for this project.\n\nCreate a functional, 3D-printable enclosure. Include:\n- Mounting holes\n- Component access\n- Cable management', bomPrompt: 'Create a Bill of Materials for this electronics project.', codePrompt: 'Write code with appropriate libraries, initialization, and main loop.', instructionsPrompt: 'Write clear steps for assembly, wiring, installation, and testing.' },
-          max_detail: { planPrompt: 'Carefully analyze this project idea in depth and create a comprehensive, detailed plan with thorough justifications.', cadPrompt: 'Generate detailed OpenSCAD code for this project.\n\nCreate a professional, 3D-printable enclosure with:\n- Precise mounting holes\n- Easy component access\n- Organized cable management\n- Ventilation if needed\n- Professional finish considerations\n- Assembly guides built into the design', bomPrompt: 'Create a comprehensive Bill of Materials with detailed specifications, multiple supplier options where applicable, and exact part numbers.', codePrompt: 'Write well-documented, production-ready code with modular functions and error handling.', instructionsPrompt: 'Write comprehensive, step-by-step assembly instructions.' }
-        };
-
-        const detail = promptDetail[state.generationMode] || promptDetail.moderate;
-
-        setState({ currentStep: 'Analyzing idea and creating plan...' });
-
-        const planText = await callAI(`You are an engineering assistant. ${detail.planPrompt}\n\nProject Idea: ${idea}\n\nCRITICAL: Output ONLY valid JSON with no markdown, no code blocks, no preamble. Start directly with { and end with }\n\n{ "projectName": "short name", "description": "one sentence", "hardware": {"platform": "e.g., ESP32", "justification": "why"}, "language": {"primary": "e.g., C++", "justification": "why"}, "cadRequirements": "physical parts needed", "electronicsComponents": ["list"], "functionalRequirements": "what code does", "pinRequirements": "pins/GPIO needed" }`);
-
-        const cleanedPlanText = planText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-        let plan;
-        try { plan = JSON.parse(cleanedPlanText); } catch (e) { throw new Error('Failed to parse plan JSON from AI. Raw output: ' + cleanedPlanText.slice(0, 500)); }
-
-        setState({ currentStep: 'Generating components in parallel...' });
-
-        const cadPromise = (state.generationMode === 'max_speed' && state.skipCAD) ? Promise.resolve('// CAD generation skipped in max speed mode') : callAI(`${detail.cadPrompt}\n\nProject: ${plan.projectName}\nHardware: ${plan.hardware.platform}\nRequirements: ${plan.cadRequirements}\n\nOutput ONLY OpenSCAD code, no explanations.`);
-
-        const bomPromise = callAI(`${detail.bomPrompt}\n\nProject: ${plan.projectName}\nPlatform: ${plan.hardware.platform}\nComponents: ${(plan.electronicsComponents || []).join(', ')}\nPins: ${plan.pinRequirements}\n\nCRITICAL: Output ONLY valid JSON with no markdown, no code blocks. Start directly with { and end with }\n\n{ "components": [{"name": "", "quantity": 1, "partNumber": "", "supplier": "", "estimatedCost": "", "purpose": "", "pinConnection": ""}], "totalEstimatedCost": "", "connectionDiagram": "" }`);
-
-        const codePromise = callAI(`${detail.codePrompt}\n\nProject: ${plan.projectName}\nHardware: ${plan.hardware.platform}\nLanguage: ${plan.language.primary}\nFunctionality: ${plan.functionalRequirements}\nOutput ONLY code, no explanations.`);
-
-        const [openscadCodeRaw, bomTextRaw, controlCodeRaw] = await Promise.all([cadPromise, bomPromise, codePromise]);
-
-        // Parse BOM safely
-        const cleanedBomText = (bomTextRaw || '').replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-        let bom;
-        try { bom = cleanedBomText ? JSON.parse(cleanedBomText) : { components: [], totalEstimatedCost: '', connectionDiagram: '' }; } catch (e) { throw new Error('Failed to parse BOM JSON from AI. Raw output: ' + cleanedBomText.slice(0, 500)); }
-
-        setState({ currentStep: 'Creating assembly instructions...' });
-        const instructions = await callAI(`${detail.instructionsPrompt}\nProject: ${plan.projectName}\nHardware: ${plan.hardware.platform}\nLanguage: ${plan.language.primary}\nComponents: ${JSON.stringify(bom.components)}\nWiring: ${bom.connectionDiagram || ''}`);
-
-        const projectData = {
-          plan,
-          openscadCode: (openscadCodeRaw || '').replace(/```.*?\n/g, '').replace(/```/g, ''),
-          bom,
-          controlCode: (controlCodeRaw || '').replace(/```.*?\n/g, '').replace(/```/g, ''),
-          instructions: instructions || ''
-        };
-
-        setState({ results: projectData });
-        await saveToHistory(projectData);
-        setState({ loading: false, currentStep: '' });
-      } catch (err) {
-        console.error('Generation error:', err);
-        setState({ error: safeText(err.message || err), loading: false, currentStep: '' });
-      }
-    }
-
-    // ---- Attach global actions (delegated) ----
-    // Event delegation for buttons inside results area (copy/download/tab change)
-    document.addEventListener('click', (ev) => {
-      const t = ev.target;
-      const btn = t.closest && t.closest('[data-tab]');
-      if (btn) {
-        const tab = btn.getAttribute('data-tab');
-        if (tab) changeTab(tab);
-        return;
-      }
-
-      if (t.id === 'downloadAllBtn') { downloadAllFiles(); return; }
-      if (t.id === 'copyCadBtn') { copyToClipboard('cad'); return; }
-      if (t.id === 'downloadCadBtn') { downloadFile('cad'); return; }
-      if (t.id === 'copyBomBtn') { copyToClipboard('bom'); return; }
-      if (t.id === 'downloadBomBtn') { downloadFile('bom'); return; }
-      if (t.id === 'copyCodeBtn') { copyToClipboard('code'); return; }
-      if (t.id === 'downloadCodeBtn') { downloadFile('code'); return; }
-      if (t.id === 'copyInstrBtn') { copyToClipboard('instructions'); return; }
-      if (t.id === 'downloadInstrBtn') { downloadFile('instructions'); return; }
-      if (t.id === 'downloadAllBtn') { downloadAllFiles(); return; }
-      // Tab buttons
-      const tabBtn = t.closest && t.closest('[data-tab]');
-      if (tabBtn) { changeTab(tabBtn.getAttribute('data-tab')); }
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt,
+        speed: state.speed,
+        skipCAD: skipCADBox.checked
+      })
     });
 
-    // Initialize
-    loadHistory(); render();
+    if (!res.ok) {
+      throw new Error("API request failed");
+    }
 
-    // Expose a safe API for integration/tests
-    window.NeuroFab = { state, render, generateProject, loadHistory };
-  })();
-  </script>
+    const generated = await res.json();
+
+    state.generated = generated;
+
+    saveToHistory({
+      id: generated.id || Date.now(),
+      title: generated.projectName || 'Generated Project',
+      desc: (generated.plan || '').split('\n')[1] || '',
+      prompt,
+      generated,
+      generatedText:
+        (generated.plan || '') + "\n\n" +
+        (generated.bom || '') + "\n\n" +
+        (generated.code || '')
+    });
+
+    loadGeneratedIntoUI(generated);
+    genLabel.textContent = prevLabel;
+
+  } catch (e) {
+    alert('Generation failed: ' + e.message);
+    genLabel.textContent = 'Generate Complete Project';
+  } finally {
+    generateBtn.disabled = ideaInput.value.trim().length < 3;
+  }
+});
+
+
+/* Load generated content into UI */
+function loadGeneratedIntoUI(g){
+  downloadAllWrap.style.display = 'flex';
+  tabsWrap.style.display = 'block';
+  downloadAllBtn.onclick = downloadAllGenerated;
+  state.generated = g;
+  renderTabs();
+  state.activeTab = TAB_LIST.find(t => t.id === 'plan').id;
+  renderActiveTab(false);
+  // quick results display
+  resultsDiv.innerHTML = `<div style="margin-top:18px;padding:12px;border-radius:10px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.03)"><strong style="color:var(--accent)">${escapeHtml(g.projectName)}</strong><div style="color:rgba(200,255,240,0.85);white-space:pre-wrap;margin-top:8px">${escapeHtml(g.plan)}</div></div>`;
+}
+
+/* ====== TABS ====== */
+function renderTabs(){
+  tabsEl.innerHTML = '';
+  tabControls.innerHTML = '';
+  const showCad = !skipCADBox.checked;
+  TAB_LIST.forEach(tab => {
+    if(tab.id === 'cad' && !showCad) return;
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.dataset.tab = tab.id;
+    btn.setAttribute('role','tab');
+    btn.innerHTML = `<span>${tab.label}</span>`;
+    btn.addEventListener('click', ()=> {
+      state.activeTab = tab.id;
+      renderActiveTab(true);
+    });
+    tabsEl.appendChild(btn);
+  });
+  updateTabStyles();
+}
+
+function renderActiveTab(animated = true){
+  Array.from(tabsEl.children).forEach(b=>{
+    if(b.dataset.tab === state.activeTab) b.classList.add('active'); else b.classList.remove('active');
+  });
+  const g = state.generated || {};
+  const contentMap = {
+    plan: g.plan || 'No plan available',
+    bom: g.bom || 'No BOM available',
+    code: g.code || 'No code available',
+    cad: g.cad || 'No CAD available',
+    assembly: g.assembly || 'No assembly guide available',
+    tips: g.tips || 'No tips available'
+  };
+  if(animated){
+    tabContent.style.opacity = 0;
+    setTimeout(()=>{ tabContent.innerText = contentMap[state.activeTab]; tabContent.style.opacity = 1; }, 120);
+  } else {
+    tabContent.innerText = contentMap[state.activeTab];
+  }
+  // tab controls
+  tabControls.innerHTML = '';
+  const copyBtn = document.createElement('button'); copyBtn.className='action-btn'; copyBtn.textContent='Copy'; copyBtn.onclick = ()=>{ navigator.clipboard.writeText(contentMap[state.activeTab]||''); flashMessage('Copied'); };
+  const downloadBtn = document.createElement('button'); downloadBtn.className='action-btn'; downloadBtn.textContent='Download'; downloadBtn.onclick = ()=>{ downloadStringAsFile(contentMap[state.activeTab]||'', `${sanitizeFilename((state.generated?.projectName||'project') + '_' + state.activeTab)}.txt`); };
+  tabControls.appendChild(copyBtn); tabControls.appendChild(downloadBtn);
+  updateTabStyles();
+}
+
+/* update tab styles based on theme and which is active */
+function updateTabStyles(){
+  const t = THEMES.find(x=>x.id===state.theme) || THEMES[0];
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    if(btn.classList.contains('active')){
+      btn.style.background = t.accent;
+      btn.style.color = t.textDark || '#003';
+      btn.style.borderColor = 'transparent';
+    } else {
+      btn.style.background = 'var(--card)';
+      btn.style.color = t.accent;
+      btn.style.borderColor = 'var(--glass-border)';
+    }
+  });
+  document.querySelectorAll('.action-btn').forEach(b=>{
+    b.style.color = t.accent;
+    b.style.background = 'var(--card)';
+  });
+  document.querySelectorAll('.btn-generate, #downloadAllBtn').forEach(b=>{
+    b.style.color = t.textDark || '#003';
+  });
+  // ensure history header color
+  document.getElementById('historyHeader').style.color = t.accent;
+}
+
+/* Download all generated parts as files */
+function downloadAllGenerated(){
+  if(!state.generated) return;
+  const g = state.generated;
+  downloadStringAsFile(g.plan||'', `${sanitizeFilename(g.projectName)}_plan.txt`);
+  downloadStringAsFile(g.bom||'', `${sanitizeFilename(g.projectName)}_bom.txt`);
+  downloadStringAsFile(g.code||'', `${sanitizeFilename(g.projectName)}_code.txt`);
+  if(g.cad) downloadStringAsFile(g.cad||'', `${sanitizeFilename(g.projectName)}_cad.scad`);
+  downloadStringAsFile(g.assembly||'', `${sanitizeFilename(g.projectName)}_assembly.txt`);
+  downloadStringAsFile(g.tips||'', `${sanitizeFilename(g.projectName)}_tips.txt`);
+}
+
+/* ====== UTILITIES ====== */
+function downloadStringAsFile(str, filename){
+  const blob = new Blob([str], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 200);
+}
+function sanitizeFilename(s){
+  return (s||'file').replace(/[^a-z0-9_\-\.]/gi,'_').slice(0,160);
+}
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function flashMessage(msg){
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.position='fixed'; el.style.right='20px'; el.style.top='80px'; el.style.background='rgba(0,0,0,0.6)';
+  el.style.color='var(--muted)'; el.style.padding='10px 14px'; el.style.borderRadius='8px'; el.style.zIndex=900;
+  document.body.appendChild(el);
+  setTimeout(()=>el.style.opacity=0,1400);
+  setTimeout(()=>document.body.removeChild(el),2000);
+}
+
+/* ====== helper: auto-hide CAD tab when Skip checked ====== */
+skipCADBox.addEventListener('change', ()=> {
+  if(state.generated){ renderTabs(); renderActiveTab(false); }
+});
+
+/* ====== keyboard accessibility & ESC handling ====== */
+window.addEventListener('keydown', (e)=> {
+  if(e.key === 'Escape'){
+    if(historyModal.style.display === 'flex') closeHistory();
+    themeDropdown.style.display='none';
+    speedDropdown.style.display='none';
+  }
+});
+
+/* ====== initial setup ====== */
+(function init(){
+  // wire dropdown lists
+  buildThemeDropdown();
+  buildSpeedDropdown();
+  // load history
+  loadHistoryFromStorage();
+  // initial theme
+  applyTheme(state.theme);
+  setSpeed(state.speed);
+  // configure buttons widths: prompt and generate are both full width inside card by CSS
+  // ensure downloadAll is hidden
+  downloadAllWrap.style.display = 'none';
+  tabsWrap.style.display = 'none';
+  // set downloadAll style consistent
+  downloadAllBtn.className = 'btn-generate';
+  downloadAllBtn.style.margin = '0 auto';
+  // ensure history modal is fixed and not affecting page layout
+  historyModal.style.display = 'none';
+  // ensure generate button disabled initially
+  generateBtn.disabled = true;
+})();
+</script>
 </body>
 </html>
-66
+
