@@ -1,55 +1,70 @@
-// /api/generate.js
-import fetch from "node-fetch";
+// File: /api/generate.js
+import { NextResponse } from "next/server";
 
-export default async function handler(req, res) {
+// Use environment variable for Gemini API key
+const API_KEY = process.env.GEMINI_API_KEY;
+if (!API_KEY) {
+  console.error("GEMINI_API_KEY is not set in environment variables");
+}
+
+export async function POST(req) {
   try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
-
-    const { prompt } = req.body;
+    const { prompt, speed, skipCAD } = await req.json();
 
     if (!prompt || prompt.trim().length === 0) {
-      return res.status(400).json({ error: "Prompt is required" });
+      return NextResponse.json({ error: "Prompt is empty" }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY environment variable" });
+    // Gemini API URL for text generation
+    const url = "https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generate";
+
+    // Prepare request body
+    const body = {
+      prompt: {
+        text: prompt
+      },
+      // You can adjust these parameters if needed
+      temperature: 0.7,
+      candidateCount: 1,
+      maxOutputTokens: 1024
+    };
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Gemini API error:", text);
+      return NextResponse.json({ error: "Gemini API request failed", details: text }, { status: res.status });
     }
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: { text: prompt },
-          temperature: 0.7,
-          candidate_count: 1,
-        }),
-      }
-    );
+    const data = await res.json();
+    // Gemini returns content under data.candidates[0].content
+    const generatedText = data?.candidates?.[0]?.content || "";
 
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({ error: `Gemini API error: ${text}` });
-    }
+    // Optionally split into sections if you want
+    const response = {
+      id: Date.now(),
+      projectName: "Generated Project",
+      plan: generatedText,
+      bom: "",      // leave blank for now or parse if you structure prompts
+      code: "",
+      cad: skipCAD ? "" : "",
+      assembly: "",
+      tips: ""
+    };
 
-    const data = await response.json();
+    return NextResponse.json(response);
 
-    // Extract text from response
-    const outputText =
-      data?.candidates?.[0]?.output?.[0]?.content?.[0]?.text ||
-      "No content returned from Gemini";
-
-    res.status(200).json({ text: outputText });
   } catch (err) {
-    console.error("Generation error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error("Error in /api/generate:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
